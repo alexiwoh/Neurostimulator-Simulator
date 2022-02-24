@@ -4,19 +4,34 @@ import logo from "./logo.svg";
 import "./App.css"; 
 
 function App() {
-
+ 
   const [data, setData] = React.useState(null);
+  const [jsx, setJSX] = React.useState((<p></p>));
+
+  /*React.useEffect(() => {
+    fetch("/api")
+      .then((res) => res.json())
+      .then((data) => setData(data.message));
+  }, []);*/
 
   React.useEffect(() => {
     fetch("/api")
       .then((res) => res.json())
-      .then((data) => setData(data.message));
+      .then((data) => {
+        setData(data.message);
+        let j = [(<h1>Project</h1>)];
+        j = j.concat(data.message.split("\n").map(s => <p>{s}</p>));
+        setJSX(j);
+      });
   }, []);
 
   return (
-    <div className="App">
-      <h1>{!data ? "Loading!..." : data}</h1>
-    </div>
+    <>
+      <div className="App">
+        <p>{!data ? "Loading!..." : ""}</p>
+      </div>  
+      {jsx}
+    </>
   );
 
   /*
