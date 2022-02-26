@@ -3,10 +3,13 @@ import React from "react";
 import logo from "./logo.svg";
 import "./App.css"; 
 
+
 function App() {
  
   const [data, setData] = React.useState(null);
   const [jsx, setJSX] = React.useState((<p></p>));
+  const [refresh, setRefresh] = React.useState(false);
+  //setInterval(()=>{setRefresh(!refresh)}, 60000);
 
   /*React.useEffect(() => {
     fetch("/api")
