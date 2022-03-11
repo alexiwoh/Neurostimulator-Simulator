@@ -11,7 +11,7 @@ app.use(session({secret: "My umm secret"}));
 
 //Body parser
 let bodyParser = require('body-parser');
-app.use(express.urlencoded({extended: true})); 
+app.use(express.urlencoded({extended: true}));  
 app.use(bodyParser.json());
 
 const port = process.env.PORT || 3001;
@@ -23,6 +23,9 @@ app.get(['/api','/info'], function(req,res) {
 });
 app.post(['/api','/info'], function(req,res) {
   res.status(200).send("Thanks for the Post request!");
+});
+app.put(['/api','/info'], function(req,res) {
+  res.status(200).send("Thanks for the Put request!");
 });
 app.use('/', function(req,res) {
   res.json({ message : logic.getSessionData(req)});
