@@ -101,9 +101,9 @@ class Programmer {
   get hibernate() {return this._hibernate;}
   set hibernate(h)  {if(typeof h == 'boolean') this._hibernate = h;}
   get batteryLevel()  {return this._batteryLevel;}
-  set batteryLevel(p)  {if(typeof p == "number" && p >= 0.0 && p <= 1.0) this._batteryLevel = p;}
+  set batteryLevel(p)  {if(typeof p == 'number' && p >= 0.0 && p <= 1.0) this._batteryLevel = p;}
   get currentGroup()  {return this._currentGroup;}
-  set currentGroup(g) {if(typeof g == "number" && g >= 0 && g <= this.groups.length - 1) this._currentGroup = Math.round(g);}
+  set currentGroup(g) {if(typeof g == 'number' && g >= 0 && g <= this.groups.length - 1) this._currentGroup = Math.round(g);}
   get serialNo()  {return this._serialNo;}
   set serialNo(s) {if(typeof s == 'string' && /^[a-zA-Z]*[0-9]*$/.test(s))  this._serialNo = s;}
   get versionNo() {return this._versionNo;}
@@ -151,6 +151,7 @@ class PatientProgrammer extends Programmer {
     super("patient");
     this._patient = patient; 
     this.serialNo = "CB0708";
+    this.stim.name = "Patient Stimulator";
   }
   get patient()  {return this._patient;}
   set patient(a) {if(a && a instanceof Patient) this._patient = a;}
@@ -163,6 +164,7 @@ class ClinicianProgrammer extends Programmer {
     this._doctor = doctor; 
     this.password = "";
     this.key = "";
+    this.stim.name = "Clinician Stimulator";
   }
   password;
   #key;
@@ -240,7 +242,7 @@ class Lead {
   // Class that represents stimulation settings for a Lead.
   static lid = 0; // id counter.
   constructor() {
-    this.#id = Lead.lid++; 
+    this.id = Lead.lid++; 
     this.#on = false; this.#level = 0.0;
     this.#lotNumber = "100001"; this.#modelNumber = "MN10450";
     this.#targetName = "''"; this.#electrodes = ['+','-','N','N'];
@@ -250,7 +252,7 @@ class Lead {
   }
   getDataAsText() {
     let s = "\n";
-    s += "Lead ID: " + this.#id.toString(10);
+    s += "Lead ID: " + this.id.toString(10);
     s += ` --- State: ${this.#on ? "ON" : "OFF"} --- Level: ${this.#level} --- Lot #: ${this.#lotNumber} --- Model #: ${this.#modelNumber}`;
     s += ` --- Target Name: ${this.#targetName} --- Anatomy: ${this.#anatomy} --- Strength: ${this.#strength}`;
     s += `\nElectrodes: [${this.#electrodes}] --- Impedance: ${this.#impedeace} Ω --- Location: ${this.#location}`;
@@ -258,9 +260,9 @@ class Lead {
     s += `--- Step Size: ${{1 : ">", 2 : ">>", 3 : ">>>"}[this.#stepSize]}`;
     return s;
   }  
-  getID() {return this.#id;}
+  getID() {return this.id;}
 
-  #id;
+  id;
   #on; // Lead on/off state.
   #level; // Lead intensity.
   #lotNumber; #modelNumber; 

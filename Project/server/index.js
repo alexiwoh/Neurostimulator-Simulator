@@ -16,19 +16,29 @@ app.use(bodyParser.json());
 
 const port = process.env.PORT || 3001;
 app.get(['/api','/info'], function(req,res) {
-  res.json({ message : logic.getSessionData(req)});
+  data = {};
+  logic.parseRequest(req, res, data);
+  data.message = logic.getSessionData(req)
+  res.json(data);
   //res.json({ message: "Hi from server!!!" });
   //res.setHeader('Content-Type','application/json');
   //res.status(200).send({dataType: "",data: "api", message: "Hello"});
 });
 app.post(['/api','/info'], function(req,res) {
-  res.status(200).send("Thanks for the Post request!");
+  let data = {}
+  logic.parseRequest(req, res, data);
+  res.status(200).json(data);
 });
 app.put(['/api','/info'], function(req,res) {
-  res.status(200).send("Thanks for the Put request!");
+  let data = {}
+  logic.parseRequest(req, res, data);
+  res.status(200).json(data);
 });
-app.use('/', function(req,res) {
-  res.json({ message : logic.getSessionData(req)});
+app.use('/', function(req, res) {
+  data = {};
+  logic.parseRequest(req, res, data);
+  data.message = logic.getSessionData(req);
+  res.json(data);
   //res.status(200).send("Simulation started!");
   //return next();
 });

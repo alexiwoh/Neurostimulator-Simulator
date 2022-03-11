@@ -19,7 +19,10 @@ function App() {
 
   React.useEffect(() => {
     fetch("/api")
-      .then((res) => res.json())
+      .then((res) => {
+        console.log(res)
+        return res.json()
+      })
       .then((data) => {
         setData(data.message);
         let j = [(<h1>Project</h1>)];
