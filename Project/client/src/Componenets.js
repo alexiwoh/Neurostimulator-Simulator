@@ -166,7 +166,7 @@ export function ProgrammerInfoPage(params)  {
   const [test, setTest] = useState(new Date());
 
   useEffect(()=>{
-    if(!matchPage) return;
+    if(!matchPage()) return;
     fetch("/api?classname=pprog&param=serialNo").then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setSNo(data.curValue)})
     fetch("/api?classname=pprog&param=versionNo").then((res) => {return res.json()})
@@ -271,6 +271,22 @@ export function GroupsPage(params) {
   const [curSubpage2, setCurSubPage2] = useState("device");
   const [curGroupID, setCurGroupID] = useState(0);
   const [curLeadID, setCurLeadID] = useState(0);
+  const [groupData, setGroupData] = useState({
+    groupNames : ['0','1','2','3','4','5','6','7'],
+    groupIDs: [0,1,2,3,4,5,6,7],
+    leadNames : ['0','1','2','3'],
+    leadIDs: [0,1,2,3],
+    curGroup: 0,
+    curLead: 0,
+    leadInfo: {
+      "on": false,
+      "level": "",
+      "target": "",
+      "sendable": true,
+      "id": 0,
+      "index": 0
+    }
+  }); 
   const [data, setData] = useState({
     stimVersion: "-",
     stimVoltage: "-",
@@ -285,7 +301,7 @@ export function GroupsPage(params) {
   });
 
   useEffect(()=>{
-    if (!matchPage) return;
+    if (!matchPage()) return;
     if (curSubpage === "my-info")  {
       if(curSubpage2 === "device")  {
         fetch("/api?classname=pstim&param=versionNo").then((res) => {return res.json()})
@@ -332,9 +348,80 @@ export function GroupsPage(params) {
         })});
       }
     } else if (curSubpage === "pain-control")  {
-
+        fetch("/api?classname=pprog&param=groupData").then((res) => {return res.json()})
+        .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+          return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, curGroup: data.curValue.currentGroup, leadNames: data.curValue.targets}
+        })}); 
     }
-  },[curPage,curSubpage,curSubpage2])
+  },[curPage, curSubpage, curSubpage2, curGroupID])
+
+  useEffect(()=>{
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=group&param=leadIndex&id=${curGroupID}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: curLeadID })
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {setGroupData(prev => {return {...prev, curLead: data.curValue}})}});
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+  },[curLeadID])
+
+  useEffect(()=>{
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=pprog&param=currentGroup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: curGroupID })
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {setGroupData(prev => {return {...prev, curGroup: data.curValue}})}});
+
+    fetch("/api?classname=pprog&param=groupData").then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, leadNames: data.curValue.targets}
+    })});
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+  },[curGroupID])
+
+  function toggleOn() {
+    if (!matchPage() || curSubpage !== "pain-control") return;
+
+    fetch(`/api?classname=lead&param=on&id=${groupData.leadInfo.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: !groupData.leadInfo.on })
+    })
+    
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+  }
+
+  function changeLevel(amount)  {
+    
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=lead&param=level&id=${groupData.leadInfo.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'relative', setValue: amount })
+    })
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+  }  
 
   function setActive(event)  {
     // Get the buttons.
@@ -397,19 +484,36 @@ export function GroupsPage(params) {
     return (curSubpage === "pain-control") ? (<>
       <div>
         <div class="group-select">
-          <button class="group-select-button">{curGroupID}</button>
-          <div class="group-select-content">
-            <p>Link 1</p>
-            <p>Link 2</p>
-            <p>Link 3</p>
-          </div>
+          <select name="group-selector" id="group-selector" onChange={(e)=>{setCurGroupID(Number(e.target.value));}}>
+            {(()=>{
+                let gr = [];
+                let gi = groupData.groupIDs;
+                let gn = groupData.groupNames;
+                for(let i=0; i< gi.length; i++) gr.push((<option value={gi[i]}> {gn[i]},{gi[i]} </option>));
+                return gr;
+              })()}
+          </select>
         </div>
+        <br></br>
+        <p>{[groupData.leadInfo.id, groupData.leadInfo.index, groupData.curGroup, groupData.curLead]}</p>
         <fieldset>
           <legend>
             <div id="paincontrol-pane" class="groups-tab tab"> 
-
+              <button id="lead-button-0" class="info-pane-button active" onClick={(e)=>{setCurLeadID(0); setCurSubPage2("lead-0"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[0]} {groupData.leadIDs[0]}</button>
+              <button id="lead-button-1" class="info-pane-button" onClick={(e)=>{setCurLeadID(1); setCurSubPage2("lead-1"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[1]} {groupData.leadIDs[1]}</button>
+              <button id="lead-button-2" class="info-pane-button" onClick={(e)=>{setCurLeadID(2); setCurSubPage2("lead-2"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[2]} {groupData.leadIDs[2]}</button>
+              <button id="lead-button-3" class="info-pane-button" onClick={(e)=>{setCurLeadID(3); setCurSubPage2("lead-3"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[3]} {groupData.leadIDs[3]}</button>
             </div>
           </legend>
+          <div>
+            <div class="up-dn-pane">
+              <button class="up-dn-btn" onClick={()=>{changeLevel(-0.05)}}> - </button>
+              {"   " + groupData.leadInfo.level + "   "}
+              <button class="up-dn-btn" onClick={()=>{changeLevel(0.05)}}> + </button>
+              <button class="on-btn" onClick={toggleOn}>{(groupData.leadInfo.on) ? "ON" : "OFF"}</button>
+            </div>
+          </div>
+          
         </fieldset>
       </div>
     </>) : (<></>)
@@ -420,6 +524,7 @@ export function GroupsPage(params) {
     let word = curPage.toLowerCase().replace(/\s+/g,"").replace("-","");
     return  word === "groups" || word === "groupspage" || word === "all";
   }
+
   return (matchPage()) 
   ? (<>
     <fieldset>

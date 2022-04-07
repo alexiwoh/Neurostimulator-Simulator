@@ -1,9 +1,7 @@
-/*.back {
-  
-  width: 100%;
-  height: 450px;
-  opacity: 100%;
-}*/
+:root {
+  --button-color: rgb(255, 184, 97);
+  --hover-color: rgb(255, 255, 255);
+}
 
 .deviceBox {
   float: left;
@@ -34,7 +32,7 @@
 }*/
 
 .header {
-  background-color:rgb(219, 246, 230);
+  background-color:rgb(180, 180, 180);
   height: 10%;
 }
 
@@ -76,11 +74,12 @@
 #dataAsText {
   float: left;
   margin-left: 1%;
+  margin-top: 20px;
 }
 
 .groups-tab button {
   display: block;
-  background-color: rgb(255, 184, 97);
+  background-color: var(--button-color);
   color: black;
   padding: 22px 16px;
   width: auto;
@@ -90,10 +89,40 @@
   border-radius: 10px;
   outline: none;
   text-align: left;
-  
+  margin-top: 10px;
   cursor: pointer;
 }
 
 .groups-tab button:hover, .groups-tab button.active {
-  background-color: rgb(255, 255, 255);
+  background-color: var(--hover-color);
 }
+
+.up-dn-btn, .on-btn {
+  background-color: var(--button-color);
+  border-radius: 10px;
+  width: auto;
+  height: auto;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.up-dn-btn:hover, .on-btn:hover {
+  background-color: var(--hover-color);
+}
+
+#group-selector {
+  float: left;
+  width: 100%;
+  height: 50px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  text-align-last: right;
+  padding-right: 50%;
+  direction: rtl;
+  background-color: var(--button-color);
+}
+
+#group-selector:hover {
+  background-color: var(--hover-color);
+}
+

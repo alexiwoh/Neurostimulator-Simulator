@@ -4,6 +4,8 @@ let classes = require('./Classes');
 let sessionData = {};
 var id = 1;
 
+const DEBUG = false;
+
 function createSessionData(req)  {
   req.session.sid = id;
   sessionData[id] = new classes.Model(id); 
@@ -24,7 +26,7 @@ function getSessionData(req)  {
 
 
 function parseRequest(req, res, data)  {
-  if(true || req.method.toLowerCase() === "post") {
+  if(DEBUG || req.method.toLowerCase() === "post") {
   req.query.classname = req.query.classname || req.body.classname;
   req.query.id = req.query.id || req.body.id;
   req.query.param = req.query.param || req.body.param;
@@ -40,7 +42,7 @@ function parseRequest(req, res, data)  {
   let obj = getObject(req);
   
   //console.log(obj[req.query.param]);
-  if(obj[req.query.param] == undefined || typeof obj[req.query.param] == "object") return;
+  if(obj[req.query.param] == undefined || (typeof obj[req.query.param] == "object" && !obj[req.query.param].sendable)) return;
   data.curValue = obj[req.query.param];
   data.oldValue = obj[req.query.param];
   if(req.method.toLowerCase() === "post" || req.method.toLowerCase() === "put") {
@@ -60,7 +62,7 @@ function parseRequest(req, res, data)  {
       data.success = (data.oldValue != undefined && data.oldValue != data.curValue) || (req.body.setValue === data.curValue);
     
   }
-  if(true || req.method.toLowerCase() === "post") {
+  if(DEBUG || req.method.toLowerCase() === "post") {
     console.log("\n-------------------------------RESPONSE DATA-----------------\n");
     console.log(`curValue: ${data.curValue}, oldValue: ${data.oldValue}, setValue: ${data.setValue}, success: ${data.success}`);
   }

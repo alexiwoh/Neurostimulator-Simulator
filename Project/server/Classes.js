@@ -106,6 +106,8 @@ class Programmer {
   }
   get waitTime()  {return this._waitTime;}
   set waitTime(w) {if(typeof w == "number" && w >= 0 && w < 3600) this._waitTime = w;}
+  get groupData()  {return {groupIDs: this.groups.map(g => g.id), targets: this.groups[this.currentGroup].leadTargets.targets, groups: this.groups.map(g => g.name), currentGroup: this.currentGroup, sendable: true};}
+  set groupData(s) {;}
 
   connectStimulator(stim) {this.stim = stim;}
   chargeDevice(amt) {this.batteryLevel += amt;}
@@ -226,6 +228,8 @@ class Group {
     this._id = Group.gid++; 
     this._name = name;
     this._leads = [new Lead(),new Lead(),new Lead(),new Lead()]; // List of Lead settings.
+    this._curLeadID = this._leads[0].id;
+    this._curLeadIndex = 0;
     this._imagePath = ""; // Path to image file representing this stimulator.
   }  
 
@@ -237,8 +241,16 @@ class Group {
   set id(n)  {if(typeof n == 'number' && n >= 0 && n < MAX_ID) this._id = n;}
   get imagePath()  {return this._image;}
   set imagePath(a) {;}
-  get leadIDs() {return this.leads.map(l => l.id).join(" ");}
-  set leadIDS (a) {;}
+  get leadID()  {return this._curLeadID;}
+  set leadID(n) {if(typeof n == 'number' && n >= 0 && n < MAX_ID) this._curLeadID = n;}
+  get leadIndex()  {return this._curLeadIndex;}
+  set leadIndex(n) {if(typeof n == 'number' && n >= 0 && n < this.leads.length) {this._curLeadIndex = n; this.leadID = this.leads[this.leadIndex].id}}
+  get leadIDs() {return {ids: this.leads.map(l => l.id), sendable: true};}
+  set leadIDs (a) {;}
+  get leadTargets() {return {targets: this.leads.map(l => l.targetName), sendable: true};}
+  set leadTargets (a) {;}
+  get leadInfo()  {return {on:this.leads[this.leadIndex].on, level:this.leads[this.leadIndex].level, target:this.leads[this.leadIndex].targetName, sendable: true, id: this.leadID, index: this.leadIndex};}
+  set leadInfo(s) {;}
   
   getDataAsText() {
     let s = "\n";
@@ -255,11 +267,11 @@ class Lead {
   static set lid(n) {if(typeof n == 'number' && n >= 0 && n < MAX_ID) Lead._lid = n;}
   constructor() {
     this._id = Lead.lid++; 
-    this._on = false; // Lead on/off state.
-    this._level = 0.0; // Lead intensity.
+    this._on = [true,false][randInt(0,1)]; // Lead on/off state.
+    this._level = Number((randInt(0,100)/100).toFixed(2)); // Lead intensity.
     this._lotNumber = "100001"; 
     this._modelNumber = "MN10450";
-    this._targetName = "''"; // Body part to be targeted by Lead setting.
+    this._targetName = ['L Foot', 'R Foot', 'L Leg', 'R Leg','L Arm','R Arm','Back'][randInt(0,6)]; // Body part to be targeted by Lead setting.
     this.#electrodes = ['+','-','N','N'];
     this.#impedeace = 65534; 
     this.#location = "''"; 
@@ -287,7 +299,7 @@ class Lead {
   get on() {return this._on;}
   set on(b)  {if(typeof b == 'boolean') this._on = b;}
   get level() {return this._level;} 
-  set level(n) {if(typeof n == 'number' && n >= 0 && n <= 1) this._level = n;}
+  set level(n) {if(typeof n == 'number' ) {this._level = Number((Math.max(0,Math.min(n,1))).toFixed(2));}} 
   get lotNumber() {return this._lotNumber;} 
   set lotNumber(s) {if(typeof s == 'string' && /^[0-9]*$/.test(s) && s.length < 10)  this._lotNumber = s;}
   get modelNumber() {return this._modelNumber;}
