@@ -24,26 +24,29 @@ function getSessionData(req)  {
 
 
 function parseRequest(req, res, data)  {
+  if(true || req.method.toLowerCase() === "post") {
   req.query.classname = req.query.classname || req.body.classname;
   req.query.id = req.query.id || req.body.id;
   req.query.param = req.query.param || req.body.param;
   console.log("\n---------------------------------REQUEST DATA----------------\n")
   console.log(req.method)
-  console.log(`query: ${req.query.classname}`)
-  console.log(`body: ${req.body}`)
-  console.log("\n-------------------------------RESPONSE DATA-----------------\n")
-  //console.log(res)
+  console.log(`class: ${req.query.classname}, param: ${req.query.param}`)
+  console.log(`setType: ${req.body.setType}, setValue: ${req.body.setValue}`)
+  }
   
 
   if(!req.query || !req.query.classname || !req.query.param)  return;
+  if(req.body.setType === null || req.body.setValue === null) return;
   let obj = getObject(req);
   
   //console.log(obj[req.query.param]);
   if(obj[req.query.param] == undefined || typeof obj[req.query.param] == "object") return;
   data.curValue = obj[req.query.param];
+  data.oldValue = obj[req.query.param];
   if(req.method.toLowerCase() === "post" || req.method.toLowerCase() === "put") {
-    data.oldValue = obj[req.query.param];
-    if(typeof req.body.setType === "string") {
+    // Add " and ' to injecction stopper??? Create whitelist // req.body.setValue.match(/["'<>/\\=+_&\|]/))
+    if((typeof req.body.setValue != 'number' && typeof req.body.setValue != 'boolean')  && !req.body.setValue.match(/^[0-9a-zA-Z -@.]+$/))  {data.success = false;} // Prevents HTML code injection.
+    if(typeof req.body.setType === "string" && data.success === undefined) {
       if(req.body.setType.toLowerCase().startsWith("abs"))  { 
         obj[req.query.param] = req.body.setValue;
       } else if (req.body.setType.toLowerCase().startsWith("rel"))  {
@@ -51,10 +54,16 @@ function parseRequest(req, res, data)  {
       }
     } 
     data.curValue = obj[req.query.param];
-    data.success = data.oldValue != undefined && data.oldValue != data.curValue;
+    data.setValue = req.body.setValue;
+    data.setType = req.body.setType;
+    if (data.success === undefined) 
+      data.success = (data.oldValue != undefined && data.oldValue != data.curValue) || (req.body.setValue === data.curValue);
+    
   }
-
-  console.log(obj);
+  if(true || req.method.toLowerCase() === "post") {
+    console.log("\n-------------------------------RESPONSE DATA-----------------\n");
+    console.log(`curValue: ${data.curValue}, oldValue: ${data.oldValue}, setValue: ${data.setValue}, success: ${data.success}`);
+  }
 }
 
 function getObject(req) {
@@ -73,6 +82,7 @@ function getObject(req) {
       case "patientprogrammer":
         return model.pProg;  
       case "doctor":
+      case "physician":
         return model.cProg.doctor;
       case "patient":
         return model.pProg.patient;

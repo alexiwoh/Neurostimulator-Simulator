@@ -2,7 +2,8 @@
 import React from "react";
 import logo from "./logo.svg";
 import "./App.css"; 
-
+import "./Componenets.css";
+import {AppComponents, Page1, Page2 } from "./Componenets"
 
 function App() {
  
@@ -28,15 +29,20 @@ function App() {
         let j = [(<h1>Project</h1>)];
         j = j.concat(data.message.split("\n").map(s => <p>{s}</p>));
         setJSX(j);
-      });
+      });   
   }, []);
 
   return (
     <>
       <div className="App">
         <p>{!data ? "Loading!..." : ""}</p>
+      </div>
+      <div>
+        <AppComponents />
       </div>  
-      {jsx}
+      <div id="dataAsText">  
+        {jsx}
+      </div>  
     </>
   );
 
