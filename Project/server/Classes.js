@@ -45,7 +45,7 @@ class Programmer {
 
   initDefaults(type="patient")  {
     this._type = type; // Type of programmer: Patient or Clinician.
-    this._on = false; // Programmer on/off state.
+    this._on = true; // Programmer on/off state.
     this._hibernate = false; // Hibernation on/off state.
     this._batteryLevel = 1.0; // Battery level of device.
     this._currentGroup = randInt(0,3); // Currently selected group setting.
@@ -54,7 +54,7 @@ class Programmer {
     this._manufacturerDate = new Date("02-Apr-2014"); // Manufacturer date.
     this._alerts = []; // Array of strings.
     this._stim = new Stimulator(); // Stimulator.
-    this._groups = [new Group("Awake"),new Group("Sleeping"),new Group(),new Group()]; // List of Group settings.
+    this._groups = [new Group("Awake"),new Group("Sleeping"),new Group("Sitting"),new Group("Napping"), new Group("Idle"), new Group("Quick Treatment"), new Group("")]; // List of Group settings.
     this._date = new Date(); // Current date.
     this._waitTime = 0;
     this._leads = []; // List of Lead settings.
@@ -108,6 +108,34 @@ class Programmer {
   set waitTime(w) {if(typeof w == "number" && w >= 0 && w < 3600) this._waitTime = w;}
   get groupData()  {return {groupIDs: this.groups.map(g => g.id), targets: this.groups[this.currentGroup].leadTargets.targets, groups: this.groups.map(g => g.name), currentGroup: this.currentGroup, sendable: true};}
   set groupData(s) {;}
+  get stimType()  {return this.stim.type;}
+  set stimType(s) {
+    let x = this.stim.type;
+    let y;
+    if(x === "") y = "TNS";
+    else if (x === "TNS") y = "INS";
+    else if (x === "INS") y = "";
+    else y = 0;
+    this.stim.type = y;
+  }
+  get turnOffAllStimulation() {
+    for (let g=0; g<this.groups.length; g++) {
+      let gr = this.groups[g];
+      for (let l=0; l<gr.leads.length; l++) { 
+        if(gr.leads[l].on) return false;;
+      }
+    }
+    return true;
+  }
+  set turnOffAllStimulation(a) {
+    if (a === false)  return;
+    for (let g=0; g<this.groups.length; g++) {
+      let gr = this.groups[g];
+      for (let l=0; l<gr.leads.length; l++) { 
+        gr.leads[l].on = false;
+      }
+    }
+  }
 
   connectStimulator(stim) {this.stim = stim;}
   chargeDevice(amt) {this.batteryLevel += amt;}
@@ -180,8 +208,9 @@ class ClinicianProgrammer extends Programmer {
 
 class Stimulator {
   // Class representing a Stimulator: INS or TNS. 
-  constructor(name="Stimulator",imagePath="") {
+  constructor(name="Stimulator",type="TNS",imagePath="") {
     this._name = name; 
+    this._type = type;
     this._imagePath = imagePath; // Path to image file representing this stimulator.
     this._SN = "CB0848"; // Simulator serial number.
     this._versionNo = "4.0.5.1"; // Version number.
@@ -209,8 +238,8 @@ class Stimulator {
   }
   get voltage()  {return this._voltage;}
   set voltage(a)  {if(typeof a == 'number') this._voltage = a;}
-
-
+  get type()  {return this._type;}
+  set type(s) {if(s === "TNS" || s === "INS" || s === "")  this._type = s;}
 
   getDataAsText() {
     let s = "\n";

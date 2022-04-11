@@ -3,14 +3,14 @@ import { useState, createContext, useContext, useEffect } from "react";
 import "./Componenets.css";
 import HumanBody from "./images/HumanBody.png";
 
-const DEBUG = true;
+const DEBUG = false;
 const border = {border:"3px solid rgba(0, 0, 0, 0.0)"};
 const curPageContext = createContext(); // Context for the 1st column/screen.
 const curPageContext2 = createContext(); // Context for the 2nd column/screen.
+function pagename(s) {return s.toLowerCase().replace(/\s+/g,"").replace("-","");}; // Convert page name for parsing.
 
 export default function TestPage(params)  {
-  return (<></>)
-
+  return (<></>);
 }
 
 export function EnterPage() {
@@ -25,7 +25,7 @@ export function EnterPage() {
         </fieldset></div></div> 
       </>
     ) : (<><div style={border}></div></>)
-}// onChange={(e)=>setCurPage(e.target.value)}
+}
 
 export function EnterPage2() {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
@@ -43,29 +43,33 @@ export function EnterPage2() {
 
 export function AppComponents(params) {
   
-  const [curPage, setCurPage] = useState("all");
+  const [curPage, setCurPage] = useState("home");
   const [curPage2, setCurPage2] = useState("all");
   
   return (
     <>
       <curPageContext.Provider value={{curPage, setCurPage, curPage2, setCurPage2}}>
         <div id="testDeviceBox" class="testDeviceBox">
-          <EnterPage />
+          {(DEBUG) ? <EnterPage /> : (<></>)}
         </div>
         <div id="testDeviceBox2" class="testDeviceBox">
-          <EnterPage2 />
+          {(DEBUG) ? <EnterPage2 /> : (<></>)}
         </div>
         <div>
-          <div id="deviceBox1" class="deviceBox">
-            <Clock />
-            <HomePage />
-            <ProgrammerInfoPage />
-            <GroupsPage />
-            <Page1  />
-            <Page2  />
+          <div>
+       
+            <div id="deviceBox1" class="deviceBox">
+              <Macro />
+              <Clock />
+              <HomePage />
+              <ProgrammerInfoPage />
+              <GroupsPage />
+              <Page1  />
+              <Page2  />
+            </div>
           </div>
           <div id="deviceBox2" class="deviceBox">
-            <PageA  />
+            {<PageA  />}
           </div>
         </div>
       </curPageContext.Provider>
@@ -146,11 +150,11 @@ export function PageA(params)  {
           <form>
             <p>Patient Name: {name}</p>
           </form>
-          
+          <h1>To be finished ...</h1>
           <br></br>
           </fieldset>
           </div>
-          <BottomButtons handleExit={handleExit} />
+          {/*<BottomButtons handleExit={handleExit} />*/}
           </div>
       </>)
     : (<><div style={border}></div></>) 
@@ -163,7 +167,7 @@ export function ProgrammerInfoPage(params)  {
   const [mDate, setMDate] = useState("");
   const [on, setOn] = useState(true);
   const [curDate, setCurDate] = useState(new Date());
-  const [test, setTest] = useState(new Date());
+  const [stim, setStim] = useState("");
 
   useEffect(()=>{
     if(!matchPage()) return;
@@ -177,7 +181,7 @@ export function ProgrammerInfoPage(params)  {
     .then((data)=>{if(data && data.curValue != undefined) setCurDate(new Date(data.curValue))})
   }, [curPage]);
 
-  function handleExit() {setCurPage("all");}
+  function handleExit() {setCurPage("home");}
   function handleSave() {
     let d = new Date(document.getElementById("current-time-select").value);
     //alert(` date:${d}\n year: ${d.getFullYear()}\n month: ${d.getMonth()}\n day: ${d.getDay()}\n hours: ${d.getHours()}`)
@@ -189,13 +193,25 @@ export function ProgrammerInfoPage(params)  {
     .then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setCurDate(new Date(data.curValue))})
     setCurPage("all"); setCurPage("pinfo");
-    
   }  
+  function handleStim() {
+    let old = stim;
+    if(stim === "") setStim("TNS");
+    else if (stim === "TNS") setStim("INS");
+    else setStim("");
+
+    fetch("/api?classname=pprog&param=stimType", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: 1 })
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data.curValue != undefined) {setStim(data.curValue)}})
+  }
   function matchPage()  {
     let word = curPage.toLowerCase().replace(/\s+/g,"").replace("-","");
     return  word === "pinfo" || word === "programmerinfo" || word === "all"
   }
-//value={curDate.toLocaleTimeString()}
   return (matchPage()) 
       ? (<>
         <div style={border}><div class="insideDiv">
@@ -208,8 +224,8 @@ export function ProgrammerInfoPage(params)  {
             <input type="datetime-local" id="current-time-select" min="2000-01-01T00:00" max="2099-12-31T23:59" required/>
             <br></br>
           </form>
-          
           <br></br>
+          <button id="bind-stim-btn" class="full-btn" onClick={handleStim}> {(stim === "") ? "<unbound>" : stim}  </button>
           </fieldset>
           </div>
           <BottomButtons handleExit={handleExit} handleSave={handleSave} />
@@ -218,7 +234,7 @@ export function ProgrammerInfoPage(params)  {
       : (<><div style={border}></div></>) 
 }
 
-// Ticking Clock component
+// Ticking Clock component. Also, handles some timed events.
 export function Clock(params)  {
   const [date, setDate] = useState(new Date());
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
@@ -226,6 +242,12 @@ export function Clock(params)  {
     const tid = setInterval(() => {
     fetch("/api?classname=pprog&param=date").then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setDate(new Date(data.curValue))})
+
+    fetch("/api?classname=pprog&param=on").then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {
+      if(!data.curValue) setCurPage("off");
+    }})
+
     }, 15000) 
     return () => {clearInterval(tid)};
   },[])
@@ -242,8 +264,8 @@ export function Clock(params)  {
 
 export function BottomButtons(params) {
   return <>
-    {(params.handleSave) ? <button class="submit-buttons" type="button" onClick={params.handleSave}>Save Settings</button> : <></>}
-    {(params.handleExit) ? <button class="submit-buttons" type="button" onClick={params.handleExit}>Exit</button> : <></>}
+    {(params.handleExit) ? <button class="submit-buttons half-btn" type="button" onClick={params.handleExit}>Exit</button> : <></>}
+    {(params.handleSave) ? <button class="submit-buttons half-btn" type="button" onClick={params.handleSave}>Save Settings</button> : <></>}
   </>
 }
 
@@ -252,16 +274,44 @@ export function HomePage() {
   const [id, setID] = useState(""); const [phone, setPhone] = useState(""); 
   const [physicanName, setPhysicianName] = useState("");
 
+  function handleOnOff()  {
+    let data = (pagename(curPage) === "off") ? true : false;
+    fetch(`/api?classname=pprog&param=on`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: data })  
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {
+      if(data.curValue) setCurPage("home");
+      else setCurPage("off");
+    }})
+  }
+
   function matchPage()  {
-    let word = curPage.toLowerCase().replace(/\s+/g,"").replace("-","");
-    return  word === "home" || word === "homepage" || word === "all";
+    let word = pagename(curPage);
+    return  word === "off" || word === "home" || word === "homepage" || word === "all";
   }
   return (matchPage()) ? (<>
-    <div id="back" class="back"> {/*style={{backgroundImage: `url(${HumanBody})`}}>*/}
+    <div id="home-pane" class="home-pane"> {/*style={{backgroundImage: `url(${HumanBody})`}}>*/}
       {/*<img src={HumanBody} alt="Logos" width="35%" height="400"></img>*/}
-      <p>Hello</p>
+      <button id="turn-off-btn" class="home-pane-btn full-btn-special" onClick={handleOnOff}> 
+        TURN {(pagename(curPage) === "off") ? "ON" : "OFF"}  
+      </button>
+      {(pagename(curPage) === "off") ? (<></>) : (<>
+      <button id="prog-set-btn" class="home-pane-btn full-btn" onClick={(e)=>{setCurPage("pinfo")}}> Program Settings </button>
+      <button id="stim-btn" class="home-pane-btn full-btn" onClick={(e)=>{setCurPage("groups")}}> Stimulation </button>
+      </>)}
     </div>
   </>) : (<></>)
+}
+
+export function Macro() {
+  const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
+  useEffect(()=>{
+    return;
+  }, [curPage])
+  return (<></>)
 }
 
 // Pages for Group and lead settings and device information.
@@ -299,6 +349,8 @@ export function GroupsPage(params) {
     address: "-",
     contact: "-"
   });
+
+  useEffect(()=>{setCurSubPage("pain-control")},[curPage])
 
   useEffect(()=>{
     if (!matchPage()) return;
@@ -434,6 +486,22 @@ export function GroupsPage(params) {
     document.getElementById(event.target.id).className +=  " active";
   }
 
+  function turnOffAllSimulation() {
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=pprog&param=turnOffAllStimulation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: true })  
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {if(data.curValue) {setCurSubPage("my-info"); setCurSubPage("pain-control");}}})
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+  }
+
   function getMyInfo()  {
     let innerJSX = (<></>);
     if(curSubpage !== "my-info") return innerJSX; 
@@ -489,20 +557,25 @@ export function GroupsPage(params) {
                 let gr = [];
                 let gi = groupData.groupIDs;
                 let gn = groupData.groupNames;
-                for(let i=0; i< gi.length; i++) gr.push((<option value={gi[i]}> {gn[i]},{gi[i]} </option>));
+                for(let i=0; i< gi.length; i++) gr.push((<option value={gi[i]}> {gn[i]} </option>));
                 return gr;
               })()}
           </select>
         </div>
         <br></br>
-        <p>{[groupData.leadInfo.id, groupData.leadInfo.index, groupData.curGroup, groupData.curLead]}</p>
+        {/*<p>{[groupData.leadInfo.id, groupData.leadInfo.index, groupData.curGroup, groupData.curLead]}</p>*/} 
         <fieldset>
           <legend>
             <div id="paincontrol-pane" class="groups-tab tab"> 
-              <button id="lead-button-0" class="info-pane-button active" onClick={(e)=>{setCurLeadID(0); setCurSubPage2("lead-0"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[0]} {groupData.leadIDs[0]}</button>
-              <button id="lead-button-1" class="info-pane-button" onClick={(e)=>{setCurLeadID(1); setCurSubPage2("lead-1"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[1]} {groupData.leadIDs[1]}</button>
-              <button id="lead-button-2" class="info-pane-button" onClick={(e)=>{setCurLeadID(2); setCurSubPage2("lead-2"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[2]} {groupData.leadIDs[2]}</button>
-              <button id="lead-button-3" class="info-pane-button" onClick={(e)=>{setCurLeadID(3); setCurSubPage2("lead-3"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[3]} {groupData.leadIDs[3]}</button>
+              { (groupData.groupNames.length > 0) ? 
+                (<>
+                  <button id="lead-button-0" class="info-pane-button active" onClick={(e)=>{setCurLeadID(0); setCurSubPage2("lead-0"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[0]} </button>
+                  <button id="lead-button-1" class="info-pane-button" onClick={(e)=>{setCurLeadID(1); setCurSubPage2("lead-1"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[1]} </button>
+                  <button id="lead-button-2" class="info-pane-button" onClick={(e)=>{setCurLeadID(2); setCurSubPage2("lead-2"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[2]} </button>
+                  <button id="lead-button-3" class="info-pane-button" onClick={(e)=>{setCurLeadID(3); setCurSubPage2("lead-3"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[3]} </button>
+                </>)
+                : (<></>)
+              }
             </div>
           </legend>
           <div>
@@ -513,13 +586,13 @@ export function GroupsPage(params) {
               <button class="on-btn" onClick={toggleOn}>{(groupData.leadInfo.on) ? "ON" : "OFF"}</button>
             </div>
           </div>
-          
         </fieldset>
+        <button class="all-off-btn" onClick={turnOffAllSimulation}> Turn Off All Stimulation </button>
       </div>
     </>) : (<></>)
   }
 
-  function handleExit() {setCurPage("all");}
+  function handleExit() {setCurPage("home");}
   function matchPage()  {
     let word = curPage.toLowerCase().replace(/\s+/g,"").replace("-","");
     return  word === "groups" || word === "groupspage" || word === "all";
@@ -537,10 +610,6 @@ export function GroupsPage(params) {
     {getMyInfo()}
     {getPainControl()}
     </fieldset>
-    <br></br><br></br><br></br><br></br><br></br>
-    
-    
-    {(<></>)}
     <BottomButtons handleExit={handleExit} />
   </>) : (<></>)
 }
