@@ -6,26 +6,13 @@ import App from './App';
 import reportWebVitals from './reportWebVitals'; 
 
 const context = createContext();
-
+ 
 ReactDOM.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
   document.getElementById('root')
 );
-
-/*ReactDOM.render(
-  
-  <>
-  <ul className='unList'>
-    <li>Apples</li>
-    <li>Bananas</li>
-    <li>Cherries</li>
-  </ul>
-  <Test2 />
-  </>,
-  document.getElementById('root')
-);*/
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

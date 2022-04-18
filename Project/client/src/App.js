@@ -26,7 +26,7 @@ function App() {
       })
       .then((data) => {
         setData(data.message);
-        let j = [(<h1>Project</h1>)];
+        let j = [(<h1>All device data (for testing purposes...)</h1>)];
         j = j.concat(data.message.split("\n").map(s => <p>{s}</p>));
         setJSX(j);
       });   

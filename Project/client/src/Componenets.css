@@ -3,13 +3,16 @@
   --hover-color: rgb(255, 255, 255);
   --header-color: rgb(180, 180, 180);
   --red-color: rgb(255, 88, 88);
+  --bar-color: rgb(163, 218, 81);
+  --button-color-2: rgb(175, 175, 254);
 }
+
 
 .deviceBox {
   float: left;
   opacity: 1.0;
   width: 35%;
-  height: 450px;
+  height: 500px;
   overflow-wrap: break-word;
   display: block;
   overflow: hidden;
@@ -26,19 +29,13 @@
 .deviceBox fieldset, .deviceBox legend  {
   border-radius: 10px;
 }
-/*.deviceBox::before {    
-  content: "";
-  background-image: url("./images/HumanBody.png");
-  background-size: cover;
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  left: 0px;
-  opacity: 0.5;
-}*/
 
-.header {
+.footer {
+  position: absolute;
+  bottom: 0px;
+}
+
+.header, .footer {
   background-color: var(--header-color);
   height: 10%;
 }
@@ -73,7 +70,7 @@
   
 }
 
-.header {
+.header, .footer {
   float: left;
   width: 100%;
 }
@@ -96,7 +93,7 @@
   border-radius: 10px;
   outline: none;
   text-align: left;
-  margin-top: 10px;
+  margin-top: 5px;
   cursor: pointer;
 }
 
@@ -138,10 +135,21 @@
   background-color: var(--header-color);
 }
 
+.on-btn {
+  width: 25%;
+  margin-left: 3%;
+  /*animation:on-blink 4s infinite;*/
+}
+
+@keyframes on-blink {
+  0% {background-color: var(--button-color);}
+  50% {background-color: var(--bar-color);}
+  100% {background-color: var(--button-color);}
+}
+
 .up-dn-btn, .on-btn {
   background-color: var(--button-color);
   border-radius: 10px;
-  width: auto;
   height: auto;
   border: 1px solid rgba(0, 0, 0, 0.5);
 }
@@ -155,6 +163,10 @@
   
 }
 
+.up-dn-btn {
+  width: 30px;
+}
+
 .up-dn-btn:hover, .on-btn:hover, .all-off-btn:hover {
   background-color: var(--hover-color);
 }
@@ -164,7 +176,7 @@
   width: 100%;
   height: 50px;
   margin-bottom: 10px;
-  margin-top: 10px;
+  margin-top: 5px;
   border-radius: 10px;
   text-align-last: right;
   padding-right: 50%;
@@ -176,3 +188,32 @@
   background-color: var(--hover-color);
 }
 
+.battery-bar {
+  -webkit-appearance: none;
+  appearance: none;
+  width : 40px;
+  height : 20px;
+  /*background-color: rgb(206, 255, 132);*/
+  overflow: hidden;
+  border-radius: 10px;
+  border: 3px solid rgba(0, 0, 0, 1);
+  
+}
+
+
+progress[value]::-webkit-progress-value {
+  background-color: var(--bar-color);
+}
+
+#level-bar {
+  width : 33%;
+}
+
+#level-bar[value]::-webkit-progress-value {
+  background-color: var(--bar-color);
+}
+@keyframes bar-blink {
+  0% {background-color: var(--bar-color);}
+  50% {background-color: var(--red-color);}
+  100% {background-color: var(--bar-color);}
+}

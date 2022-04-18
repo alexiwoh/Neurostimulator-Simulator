@@ -36,11 +36,25 @@ class Model {
 class Programmer {
   // Class representing a Programmer device. 
 
-  #tid; // Stores setInterval() objects.
+  #tid; #tid2; // Stores setInterval() objects.
   constructor(type="patient") {
     this.initDefaults(type);
-    this.#tid = setInterval(() => {this._date.setSeconds(this._date.getSeconds()+15)},15000); // Increment date each second.
-    // Remember to clearInterval()!!!!!
+    this.#tid = setInterval(() => {
+      this._date.setSeconds(this._date.getSeconds()+15);
+    }, 15000); // Increment date each second.
+    
+    this.#tid2 = setInterval(()=>{
+      if(this.on) this._batteryLevel -= 0.005;
+      if(this.batteryLevel <= 0)  {this.on = false; this.batteryLevel = 0.0;}
+      if(this.batteryLevel >= 1)  {this.batteryLevel = 1.0;}
+      if(!this.on)  {this.batteryLevel += 0.2; return;}
+      for(let l = 0; l < this.leads.length; l++)  {
+        let li = this.leads[l];
+        if(li.on) this.batteryLevel -= li.level/150;
+      }
+      
+      //console.log(`${type}: ${this.batteryLevel}`);
+    }, 5000);
   }
 
   initDefaults(type="patient")  {
@@ -79,8 +93,8 @@ class Programmer {
   set on(on) {if(typeof on == 'boolean') this._on = on;}
   get hibernate() {return this._hibernate;}
   set hibernate(h)  {if(typeof h == 'boolean') this._hibernate = h;}
-  get batteryLevel()  {return this._batteryLevel;}
-  set batteryLevel(p)  {if(typeof p == 'number' && p >= 0.0 && p <= 1.0) this._batteryLevel = p;}
+  get batteryLevel()  {return Number(this._batteryLevel.toFixed(2));}
+  set batteryLevel(p)  {if(typeof p == 'number') this._batteryLevel = (Math.max(0,Math.min(p,1)));}
   get currentGroup()  {return this._currentGroup;}
   set currentGroup(g) {if(typeof g == 'number' && g >= 0 && g <= this.groups.length - 1) this._currentGroup = Math.round(g);}
   get serialNo()  {return this._serialNo;}
@@ -122,7 +136,7 @@ class Programmer {
     for (let g=0; g<this.groups.length; g++) {
       let gr = this.groups[g];
       for (let l=0; l<gr.leads.length; l++) { 
-        if(gr.leads[l].on) return false;;
+        if(gr.leads[l].on) return false;
       }
     }
     return true;
@@ -350,14 +364,16 @@ class Lead {
 class Person {
   _title;
   _name;
-  id; // Person's id number assigned by institution. 
+  _id; // Person's id number assigned by institution. 
   _phoneNumber; // A string in the format xxx-xxx-xxxx, with x being a digit. 
   _address;
   notes; // Free form notes about the person.
 
   constructor(title = "", name = "", id = "", phoneNumber = "123-456-7890", address = "123 Axium Blvd.", notes = "") {
-    this.setTitle(title); this.setName(name); this.setPhoneNumber(phoneNumber); this._address = address; this.notes = notes; this.id = id;
+    this.setTitle(title); this.setName(name); this.setPhoneNumber(phoneNumber); this._address = address; this.notes = notes; this._id = id;
   }
+  get id()  {return this._id;}
+  set id(s) {if(typeof s == 'string' && /^[a-zA-Z]*[0-9]*$/.test(s) && s.length < 10)  this._id = s;}
   get name()  {return this.getName();}
   set name(s) {this.setName(s);}
   get title()  {return this.getTitle();}
@@ -424,7 +440,7 @@ class Doctor extends Person {
 }
 
 class Patient extends Person {
-  constructor(title = "Mr.", name = "Alex", id = "", phoneNumber = "123-456-7890", address = "123 Axium Street", notes = "", dob = new Date("01-Jan-1969")) {
+  constructor(title = "Mr.", name = "Alex", id = "J052122", phoneNumber = "123-456-7890", address = "123 Axium Street", notes = "", dob = new Date("01-Jan-1969")) {
     super(title,name,id,phoneNumber,address,notes);
     this.dob = dob;
   }

@@ -44,9 +44,8 @@ function parseRequest(req, res, data)  {
   //console.log(obj[req.query.param]);
   if(obj[req.query.param] == undefined || (typeof obj[req.query.param] == "object" && !obj[req.query.param].sendable)) return;
   data.curValue = obj[req.query.param];
-  data.oldValue = obj[req.query.param];
   if(req.method.toLowerCase() === "post" || req.method.toLowerCase() === "put") {
-    // Add " and ' to injecction stopper??? Create whitelist // req.body.setValue.match(/["'<>/\\=+_&\|]/))
+    data.oldValue = obj[req.query.param];
     if((typeof req.body.setValue != 'number' && typeof req.body.setValue != 'boolean')  && !req.body.setValue.match(/^[0-9a-zA-Z -@.]+$/))  {data.success = false;} // Prevents HTML code injection.
     if(typeof req.body.setType === "string" && data.success === undefined) {
       if(req.body.setType.toLowerCase().startsWith("abs"))  { 

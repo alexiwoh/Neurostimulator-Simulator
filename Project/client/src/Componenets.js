@@ -56,19 +56,19 @@ export function AppComponents(params) {
           {(DEBUG) ? <EnterPage2 /> : (<></>)}
         </div>
         <div>
-          <div>
-       
+          <div id="outerDeviceBox1" class="outerDeviceBox">
             <div id="deviceBox1" class="deviceBox">
-              <Macro />
               <Clock />
               <HomePage />
               <ProgrammerInfoPage />
               <GroupsPage />
               <Page1  />
               <Page2  />
+              <Footer />
             </div>
           </div>
           <div id="deviceBox2" class="deviceBox">
+            <Clock type="cprog" />
             {<PageA  />}
           </div>
         </div>
@@ -160,6 +160,10 @@ export function PageA(params)  {
     : (<><div style={border}></div></>) 
 }
 
+/***                                ***/
+/*** PATIENT PROGRAMMER COMPONENETS ***/
+/***                                ***/
+
 // Programmer Info and settings page
 export function ProgrammerInfoPage(params)  {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
@@ -235,32 +239,77 @@ export function ProgrammerInfoPage(params)  {
 }
 
 // Ticking Clock component. Also, handles some timed events.
-export function Clock(params)  {
+export function Clock()  {
   const [date, setDate] = useState(new Date());
+  const [battery, setBattery] = useState(0.5); // Battery level.
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
-  useEffect(()=>{
-    const tid = setInterval(() => {
-    fetch("/api?classname=pprog&param=date").then((res) => {return res.json()})
+  //const [type, setType] = useState((params.type === undefined) ? "pprog" : params.type);
+
+  function fetchValues()  {
+    fetch(`/api?classname=pprog&param=date`).then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setDate(new Date(data.curValue))})
 
-    fetch("/api?classname=pprog&param=on").then((res) => {return res.json()})
+    fetch(`/api?classname=pprog&param=batteryLevel`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setBattery(data.curValue)})
+
+    fetch(`/api?classname=pprog&param=on`).then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) {
-      if(!data.curValue) setCurPage("off");
+      if(data.curValue === false) setCurPage("off");
     }})
 
-    }, 15000) 
+  }
+
+  useEffect(()=>{
+    const tid = setInterval(() => {
+      fetchValues();
+    }, 5000) 
     return () => {clearInterval(tid)};
   },[])
-  useEffect(()=>{
-    fetch("/api?classname=pprog&param=date").then((res) => {return res.json()})
-    .then((data)=>{if(data && data.curValue != undefined) setDate(new Date(data.curValue))})
-  },[curPage])
+  useEffect(()=>{fetchValues();},[curPage])
   
   return (<>
-    <div id="clock-1" class="header" ><p style={{"margin-left":"3%"}}>Current Date: {date.toDateString()}, {date.toLocaleTimeString(navigator.language, {hour: '2-digit', minute:'2-digit'})}</p></div>
+  <div>
+    
+    <div id="clock-1" class="header" >
+      <p style={{"margin-left":"3%", "float": "left", "width": "100%", "height": "20px"}}>
+        <div style={{"display": "inline-block", "margin-left":"3%", "float": "left", "width": "25%"}}> {(battery*100).toFixed(0)}% <progress class="battery-bar" value={battery} max="1.0"></progress> </div> 
+        <div style={{"display": "inline-block", "margin-left":"10%", "float":"left", "width" :"60%"}}>{date.toDateString()}, {date.toLocaleTimeString(navigator.language, {hour: '2-digit', minute:'2-digit'})}</div>
+      </p>
+    </div>
     {/*<div class="footer" ><p>Current Date: {date.toDateString()}, {date.toLocaleTimeString()}</p></div>*/}
+  </div>
   </>)
 }  
+
+export function Footer()  {
+  const [id, setID] = useState("");
+  const [SN, setSN] = useState("");
+  const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
+  function fetchValues()  {
+    fetch(`/api?classname=patient&param=id`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setID(data.curValue)})
+    fetch(`/api?classname=pstim&param=SN`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setSN(data.curValue)})
+  }
+  useEffect(()=>{
+    const tid = setInterval(() => {
+      fetchValues();
+    }, 5000) 
+    return () => {clearInterval(tid)};
+  },[])
+  useEffect(()=>{fetchValues();},[curPage])
+  
+  return (<>
+    <div>
+      <div id="footer-1" class="footer" >
+        <p style={{"margin-left":"3%", "float": "left", "width": "100%", "height": "20px"}}>
+          <div style={{"display": "inline-block", "margin-left":"5%", "float": "left", "width": "40%"}}>ID: {id}</div> 
+          <div style={{"display": "inline-block", "margin-left":"5%", "float":"left", "width" :"40%"}}>Stimulator {SN}</div>
+        </p>
+      </div>
+    </div>
+    </>)
+}
 
 export function BottomButtons(params) {
   return <>
@@ -315,7 +364,7 @@ export function Macro() {
 }
 
 // Pages for Group and lead settings and device information.
-export function GroupsPage(params) {
+export function GroupsPage() {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
   const [curSubpage, setCurSubPage] = useState("pain-control");
   const [curSubpage2, setCurSubPage2] = useState("device");
@@ -407,6 +456,7 @@ export function GroupsPage(params) {
     }
   },[curPage, curSubpage, curSubpage2, curGroupID])
 
+  // Updates GUI when selected lead changes.
   useEffect(()=>{
     if (!matchPage() || curSubpage !== "pain-control") return;
     fetch(`/api?classname=group&param=leadIndex&id=${curGroupID}`, {
@@ -423,6 +473,7 @@ export function GroupsPage(params) {
     })}); 
   },[curLeadID])
 
+  // Updates GUI when selected group changes.
   useEffect(()=>{
     if (!matchPage() || curSubpage !== "pain-control") return;
     fetch(`/api?classname=pprog&param=currentGroup`, {
@@ -478,7 +529,7 @@ export function GroupsPage(params) {
   function setActive(event)  {
     // Get the buttons.
     let buttons = document.getElementById(event.target.parentElement.id).getElementsByClassName(event.target.className);
-    // Loop through buttons and remove 'active' designation.
+    // Loop through buttons and remove 'active' class name.
     for (let i = 0; i < buttons.length; i++) {
       buttons[i].className = buttons[i].className.replace(" active", "");
     }
@@ -563,7 +614,6 @@ export function GroupsPage(params) {
           </select>
         </div>
         <br></br>
-        {/*<p>{[groupData.leadInfo.id, groupData.leadInfo.index, groupData.curGroup, groupData.curLead]}</p>*/} 
         <fieldset>
           <legend>
             <div id="paincontrol-pane" class="groups-tab tab"> 
@@ -580,10 +630,11 @@ export function GroupsPage(params) {
           </legend>
           <div>
             <div class="up-dn-pane">
-              <button class="up-dn-btn" onClick={()=>{changeLevel(-0.05)}}> - </button>
-              {"   " + groupData.leadInfo.level + "   "}
-              <button class="up-dn-btn" onClick={()=>{changeLevel(0.05)}}> + </button>
-              <button class="on-btn" onClick={toggleOn}>{(groupData.leadInfo.on) ? "ON" : "OFF"}</button>
+              <button class="on-btn" onClick={toggleOn} style={{"animation":(groupData.leadInfo.on) ? "on-blink 1.0s infinite" : "none"}}>{(groupData.leadInfo.on) ? "ON" : "OFF"}</button>
+              <button class="up-dn-btn" onClick={()=>{changeLevel(-0.05)}}  style={{"animation":(groupData.leadInfo.on) ? "on-blink 1.0s infinite" : "none"}}> - </button>
+              <button class="up-dn-btn" onClick={()=>{changeLevel(0.05)}}   style={{"animation":(groupData.leadInfo.on) ? "on-blink 1.0s infinite" : "none"}}> + </button>
+              <div style={{"width":"15%", "display": "inline-block", "text-align": "center"}}> {(groupData.leadInfo.level*100).toFixed(0)}% </div>
+              <progress id="level-bar" class="battery-bar" value={groupData.leadInfo.level} max="1.0" style={{"margin-left": "1%"}}></progress>
             </div>
           </div>
         </fieldset>
@@ -613,3 +664,17 @@ export function GroupsPage(params) {
     <BottomButtons handleExit={handleExit} />
   </>) : (<></>)
 }
+
+
+
+
+
+
+
+
+
+
+
+/***                                  ***/
+/*** CLINICIAN PROGRAMMER COMPONENETS ***/
+/***                                  ***/
