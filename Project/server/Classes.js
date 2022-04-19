@@ -8,10 +8,12 @@ class Model {
   // Class that links multiple Programmer devices.
   constructor(m_id=0) {
     this._id = m_id;
+    //let d = new Doctor();
+    //let p = new Patient();
     this.pProg = new PatientProgrammer(); // Patient programmer object.
     this.cProg = new ClinicianProgrammer(); // Clinician programmer object.
+    this.cProg.prog = this.pProg;
     Lead.lid = 0; Group.gid = 0;
-    
     
   } 
   get id()  {return this._id}
@@ -37,8 +39,9 @@ class Programmer {
   // Class representing a Programmer device. 
 
   #tid; #tid2; // Stores setInterval() objects.
-  constructor(type="patient") {
-    this.initDefaults(type);
+  constructor(prog = undefined, type="patient") {
+    this._prog = (prog && Object.prototype.toString.call(prog) === "[object Programmer]") ? prog : undefined;
+    this.initDefaults(this._prog, type);
     this.#tid = setInterval(() => {
       this._date.setSeconds(this._date.getSeconds()+15);
     }, 15000); // Increment date each second.
@@ -49,11 +52,10 @@ class Programmer {
       if(this.batteryLevel >= 1)  {this.batteryLevel = 1.0;}
       if(!this.on)  {this.batteryLevel += 0.2; return;}
       for(let l = 0; l < this.leads.length; l++)  {
+        if(this.stim.type === "") break;
         let li = this.leads[l];
         if(li.on) this.batteryLevel -= li.level/150;
       }
-      
-      //console.log(`${type}: ${this.batteryLevel}`);
     }, 5000);
   }
 
@@ -72,16 +74,19 @@ class Programmer {
     this._date = new Date(); // Current date.
     this._waitTime = 0;
     this._leads = []; // List of Lead settings.
-    for (let g=0; g<this.groups.length; g++) {
+    for (let g = 0; g < this.groups.length; g++) {
       let gr = this.groups[g];
-      for (let l=0; l<gr.leads.length; l++) { 
+      for (let l=0; l <gr.leads.length; l++) { 
         let li = gr.leads[l];
         this.leads.push(li);
       }
     }
+    this.leads[0].on = false; this.leads[0].level = 0.0;
+    this._patient = new Patient();
+    this._doctor = new Doctor(); 
+    this._prog = undefined;
   }
 
-  
   get type() {return this._type;}
   set type(t) { 
     if(typeof t == 'string' && /\w*/.test(t)) {
@@ -150,6 +155,22 @@ class Programmer {
       }
     }
   }
+  get patient()  {return this._patient;}
+  set patient(a) {if(a && a instanceof Patient) this._patient = a;}
+  get doctor()  {return this._doctor;}
+  set doctor(a) {if(a && a instanceof Doctor) this._doctor = a;}
+
+  get prog()  {return this._prog;}
+  set prog(p)  {
+    if(p instanceof Programmer) {
+      this._prog = p;
+      this._stim = p.stim;
+      this._doctor = p.doctor;
+      this._patient = p.patient;
+      this._groups = p.groups;
+      this._leads = p.leads;
+    }
+  }
 
   connectStimulator(stim) {this.stim = stim;}
   chargeDevice(amt) {this.batteryLevel += amt;}
@@ -175,41 +196,40 @@ class Programmer {
 }
 
 class PatientProgrammer extends Programmer {
-  constructor(patient = new Patient()) {
-    super("patient");
-    this._patient = patient; 
+  constructor() {
+    super("patient"); 
     this.serialNo = "CB0708";
     this.stim.name = "Patient Stimulator";
   }
-  get patient()  {return this._patient;}
-  set patient(a) {if(a && a instanceof Patient) this._patient = a;}
 }
 class ClinicianProgrammer extends Programmer {
-  constructor(doctor = new Doctor()) {
+  constructor() {
     super("clinician");
     this._stimOffTime = 30; // How long it takes (in seconds) before a magnet held over the device switches off delivered therapy.
     this._rampDuration = 1; // How long it takes (in seconds) for the NS to reach the requested amplitude.
-    this._doctor = doctor; 
-    this._password = "";
+    this._impedanceInterval = 6; // The frequency with which you want the system to measure lead impedance, in hours.
+    this._followUpPeriod = 4; // Follow up period before next appointment, in weeks. 
     this.key = "";
     this.stim.name = "Clinician Stimulator";
   }
- 
-  #key;
-  impedenceInterval; // The frequency with which you want the system to measure lead impedance. 
-  match(password) { // Checks if input password (hash?) matches actual password hash.
-    return this.password === password;
-  }
 
+  get followUpPeriod() {return this._followUpPeriod;}
+  set followUpPeriod(a) {if(typeof a == "number" && a > 0 && a < 53) this._followUpPeriod = a;}
+  get impedanceInterval() {return this._impedanceInterval;}
+  set impedanceInterval(a)  {if(typeof a == "number" && a > 0 && a < 24) this._impedanceInterval = a;}
   get stimOffTime() {return this._stimOffTime;}
-  set stimOffTime(a)  {if(typeof a == "number" && a >= 0 && a < 3600*24) this._stimOffTime = a;}
+  set stimOffTime(a)  {if(typeof a == "number" && a > 0 && a < 3600*24) this._stimOffTime = a;}
   get rampDuration()  {return this._rampDuration;}
-  set rampDuration(a)  {if(typeof a == "number" && a >= 0 && a < 3600) this._rampDuration = a;}
-  get doctor()  {return this._doctor;}
-  set doctor(a) {if(a && a instanceof Doctor) this._doctor = a;}
+  set rampDuration(a)  {if(typeof a == "number" && a > 0 && a < 3600) this._rampDuration = a;}
   get password()  {return "**********";}
   set password(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length < 20)  this._password = s;}
-  
+  get connected() {return this.stim === this.prog.stim;}
+  set connected(a)  {
+    if(a === true) this.stim = this.prog.stim;
+    else this.stim = undefined;
+  }
+  get connect() {return this.connected;}
+  set connect(a)  {this.connected = a;}
 
   // Prints all data as text.
   getDataAsText() {
@@ -292,7 +312,7 @@ class Group {
   set leadIDs (a) {;}
   get leadTargets() {return {targets: this.leads.map(l => l.targetName), sendable: true};}
   set leadTargets (a) {;}
-  get leadInfo()  {return {on:this.leads[this.leadIndex].on, level:this.leads[this.leadIndex].level, target:this.leads[this.leadIndex].targetName, sendable: true, id: this.leadID, index: this.leadIndex};}
+  get leadInfo()  {return {on:this.leads[this.leadIndex].on, level:this.leads[this.leadIndex].level, target:this.leads[this.leadIndex].targetName, sendable: true, id: this.leadID, index: this.leadIndex, stepSize: this.leads[this.leadIndex].stepSize};}
   set leadInfo(s) {;}
   
   getDataAsText() {
@@ -308,6 +328,9 @@ class Lead {
   static _lid = 0; // id counter.
   static get lid()  {return Lead._lid;}
   static set lid(n) {if(typeof n == 'number' && n >= 0 && n < MAX_ID) Lead._lid = n;}
+  static _stepBase = 0.05;
+  static get stepBase() {return Lead._stepBase;}
+  static set stepBase(n)  {;}
   constructor() {
     this._id = Lead.lid++; 
     this._on = [true,false][randInt(0,1)]; // Lead on/off state.
@@ -318,7 +341,7 @@ class Lead {
     this.#electrodes = ['+','-','N','N'];
     this.#impedeace = 65534; 
     this.#location = "''"; 
-    this.#stepSize = randInt(1,3);
+    this._stepSize = randInt(1,3); // Affects how much values change by pressing the arrow buttons. Ranges from 1-3 and affects multiple parameters.
     this.#pulseAmplitude = 0; 
     this.#maxAmplitude = 6000; 
     this.#pulseWidth = 300; 
@@ -333,7 +356,7 @@ class Lead {
     s += ` --- Target Name: ${this.targetName} --- Anatomy: ${this.#anatomy} --- Strength: ${this.#strength}`;
     s += `\nElectrodes: [${this.#electrodes}] --- Impedance: ${this.#impedeace} Ω --- Location: ${this.#location}`;
     s += ` --- Pulse Amp: ${this.#pulseAmplitude}μA (max: ${this.#maxAmplitude}μA) --- Pulse Width: ${this.#pulseWidth}μs --- Pulse Freq: ${this.#pulseFrequency}Hz`;
-    s += `--- Step Size: ${{1 : ">", 2 : ">>", 3 : ">>>"}[this.#stepSize]}`;
+    s += `--- Step Size: ${{1 : ">", 2 : ">>", 3 : ">>>"}[this._stepSize]}`;
     return s;
   }  
 
@@ -352,7 +375,8 @@ class Lead {
   #electrodes; // Electreode settings: + (positive), - (negative), N (neutral). There must be at least one positive and one negative electrode.
   #impedeace; // Active impedence in Ohms. 65534 Ω indicates an open or missing lead.
   #location; // Spinal level where stimulation therapy is delivered by this lead.
-  #stepSize; // Affects how much values change by pressing the arrow buttons. Ranges from 1-3 and affects multiple parameters.
+  get stepSize()  {return this._stepSize * Lead.stepBase;} 
+  set stepSize(n)  {if(typeof n == 'number' ) this._stepSize = Number(Math.max(1,Math.min(n,3)));}
   #pulseAmplitude; // Amplitude in μA. Ranges from 0 to 6000μA by default.
   #maxAmplitude; // 6000μA by default.
   #pulseWidth; // Ranges from 40 - 1000μs.
@@ -367,10 +391,10 @@ class Person {
   _id; // Person's id number assigned by institution. 
   _phoneNumber; // A string in the format xxx-xxx-xxxx, with x being a digit. 
   _address;
-  notes; // Free form notes about the person.
+  _notes; // Free form notes about the person.
 
-  constructor(title = "", name = "", id = "", phoneNumber = "123-456-7890", address = "123 Axium Blvd.", notes = "") {
-    this.setTitle(title); this.setName(name); this.setPhoneNumber(phoneNumber); this._address = address; this.notes = notes; this._id = id;
+  constructor(title = "", name = "", id = "", phoneNumber = "123-456-7890", address = "123 Axium Blvd.", notes = "Add notes here...") {
+    this.setTitle(title); this.setName(name); this.setPhoneNumber(phoneNumber); this._address = address; this._notes = notes; this._id = id; 
   }
   get id()  {return this._id;}
   set id(s) {if(typeof s == 'string' && /^[a-zA-Z]*[0-9]*$/.test(s) && s.length < 10)  this._id = s;}
@@ -381,8 +405,9 @@ class Person {
   get phoneNumber()  {return this.getPhoneNumber();}
   set phoneNumber(s) {this.setPhoneNumber(s);}
   get address() {return this._address;}
-  set address(s)  {if(typeof s == 'string' && /^[a-zA-Z0-9]+$/.test(s) && s.length < 30)  this._address = s;}
-
+  set address(s)  {if(typeof s == 'string' && /^[a-zA-Z0-9 .'-]+$/.test(s) && s.length < 30)  this._address = s;}
+  get notes() {return this._notes;}
+  set notes(s)  {if(typeof s == 'string' && s.length < 200)  this._notes = s;}
 
   getTitle() {return this._title;} 
   setTitle(title) {
@@ -394,7 +419,7 @@ class Person {
   }
   getName() {return this._name;}
   setName(name) {
-    if(typeof name === 'string' && /\w*/.test(name) && name.length < 20)  {
+    if(typeof name === 'string' && /^[a-zA-Z0-9 .'-]+$/.test(name) && name.length < 20)  {
       this._name = name;
       return true;
     }
@@ -418,7 +443,7 @@ class Person {
 
 }
 class Doctor extends Person {
-  constructor(title = "Dr.", name = "Vojislav", id = "", phoneNumber = "098-765-4321", address = "456 Axium Blvd", notes = "",
+  constructor(title = "Dr.", name = "Vojislav", id = "D221250", phoneNumber = "098-765-4321", address = "456 Axium Blvd", notes = "",
     clinicName = "The Corriveau Hospital", clinicEmail = "info@spinalmodulation.com", clinicHistory = "") {
     super(title,name,id,phoneNumber,address,notes);
     this._clinicName = clinicName; this._clinicEmail = clinicEmail; this.clinicHistory = clinicHistory;
@@ -428,9 +453,9 @@ class Doctor extends Person {
   clinicHistory;
 
   get email() {return this._clinicEmail;}
-  set email(s) {if(typeof s == 'string' && /^[a-zA-Z0-9]+@[a-zA-Z0-9]+.[a-zA-Z]+$/.test(s) && s.length < 30)  this._clinicEmail = s;}
+  set email(s) {if(typeof s == 'string' && /^[a-zA-Z0-9]+@[a-zA-Z0-9]+.[a-zA-Z0-9]+$/.test(s) && s.length < 30)  this._clinicEmail = s;}
   get clinicName()  {return this._clinicName;}
-  set clinicName(s) {if(typeof s == 'string' && /^[a-zA-Z0-9]+$/.test(s) && s.length < 30)  this._clinicName = s;}
+  set clinicName(s) {if(typeof s == 'string' && /^[a-zA-Z0-9 .'-]+$/.test(s) && s.length < 30)  this._clinicName = s;}
 
   performTrial(patient)  {}
   getDataAsText() {
@@ -440,11 +465,19 @@ class Doctor extends Person {
 }
 
 class Patient extends Person {
-  constructor(title = "Mr.", name = "Alex", id = "J052122", phoneNumber = "123-456-7890", address = "123 Axium Street", notes = "", dob = new Date("01-Jan-1969")) {
+  constructor(title = "Mr.", name = "Alex", id = "J052122", phoneNumber = "123-456-7890", address = "123 Axium Street", notes = "Add notes here...", dob = new Date("Jan 01 1969")) {
     super(title,name,id,phoneNumber,address,notes);
-    this.dob = dob;
+    this._dob = dob; // Date of birth.
   }
-  dob; // Date of birth.
+  get dob()  {return this._dob.getTime();}
+  set dob(s) {
+    if(typeof s != 'string' && typeof s != 'number')  return;
+    let d = new Date(s);
+    if(d && Object.prototype.toString.call(d) === "[object Date]" && !isNaN(d))
+    this._dob = d;
+  }
+
+
   getDataAsText() {
     let s = "\n";
     s += `DOB: ${this.dob}`;

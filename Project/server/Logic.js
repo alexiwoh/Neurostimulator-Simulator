@@ -46,7 +46,7 @@ function parseRequest(req, res, data)  {
   data.curValue = obj[req.query.param];
   if(req.method.toLowerCase() === "post" || req.method.toLowerCase() === "put") {
     data.oldValue = obj[req.query.param];
-    if((typeof req.body.setValue != 'number' && typeof req.body.setValue != 'boolean')  && !req.body.setValue.match(/^[0-9a-zA-Z -@.]+$/))  {data.success = false;} // Prevents HTML code injection.
+    if((typeof req.body.setValue != 'number' && typeof req.body.setValue != 'boolean')  && !req.body.setValue.match(/^[0-9a-zA-Z -'@.]+$/))  {data.success = false;} // Prevents HTML code injection.
     if(typeof req.body.setType === "string" && data.success === undefined) {
       if(req.body.setType.toLowerCase().startsWith("abs"))  { 
         obj[req.query.param] = req.body.setValue;
