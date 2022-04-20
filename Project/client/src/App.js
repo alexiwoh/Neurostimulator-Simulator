@@ -4,6 +4,7 @@ import logo from "./logo.svg";
 import "./App.css"; 
 import "./Componenets.css";
 import {AppComponents, Page1, Page2 } from "./Componenets"
+const DEBUG = false;
 
 function App() {
  
@@ -33,7 +34,7 @@ function App() {
         <AppComponents />
       </div>  
       <div id="dataAsText">  
-        {jsx}
+        {(DEBUG) ? jsx : <></>}
       </div>  
     </>
   );

@@ -125,6 +125,10 @@
   height: 50px;
 }
 
+#myinfo-pane button {
+  width: auto;
+}
+
 .home-pane-btn, .full-btn, .half-btn, .full-btn-c {
   display: block;
   color: black;
