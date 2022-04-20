@@ -13,7 +13,7 @@
   float: left;
   opacity: 1.0;
   width: 37.5%;
-  height: 550px;
+  height: 555px;
   overflow-wrap: break-word;
   display: block;
   overflow: hidden;
@@ -61,9 +61,9 @@
   align-items: center;
   align-content: center;
   margin-left: 10%;
-  background-color:lightpink;
+  
   float: left;
-  border: 3px solid rgba(0, 0, 0, 0.75);
+  border: 3px solid rgba(0, 0, 0, 0.0);
 }
 
 .insideDiv {
@@ -89,8 +89,7 @@
   background-color: var(--button-color);
   color: black;
   padding: 22px 16px;
-  width: auto;
-  height: auto;
+
   float: left;
   border: 1px solid rgba(0, 0, 0, 0.5);
   border-radius: 10px;
@@ -105,8 +104,7 @@
   background-color: var(--button-color-2);
   color: black;
   padding: 22px 16px;
-  width: auto;
-  height: 40px;
+
   float: left;
   border: 1px solid rgba(0, 0, 0, 0.5);
   border-radius: 10px;
@@ -116,6 +114,16 @@
   cursor: pointer;
 }
 
+.group-pane-button {
+  height: 50px;
+}
+
+.info-pane-button {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  width: 77px;
+  height: 50px;
+}
 
 .home-pane-btn, .full-btn, .half-btn, .full-btn-c {
   display: block;
@@ -153,7 +161,9 @@
   margin-left: 5%;
   width: 42.5%;
   background-color: var(--header-color);
+  overflow-x: hidden;
 }
+
 
 .on-btn {
   width: 25%;
@@ -165,6 +175,12 @@
   0% {background-color: var(--button-color);}
   50% {background-color: var(--bar-color);}
   100% {background-color: var(--button-color);}
+}
+
+@keyframes on-blink-C {
+  0% {background-color: var(--button-color-2);}
+  50% {background-color: var(--bar-color);}
+  100% {background-color: var(--button-color-2);}
 }
 
 .up-dn-btn, .on-btn {
@@ -195,6 +211,12 @@
   background-color: var(--hover-color);
 }
 
+.up-dn-pane-cprog button  {
+  background-color: var(--button-color-2);
+}
+
+
+
 #group-selector {
   float: left;
   width: 100%;
@@ -208,7 +230,20 @@
   background-color: var(--button-color);
 }
 
-#group-selector:hover {
+#group-selector-C {
+  float: left;
+  width: 100%;
+  height: 50px;
+  margin-bottom: 10px;
+  margin-top: 5px;
+  border-radius: 10px;
+  text-align-last: right;
+  padding-right: 50%;
+  direction: rtl;
+  background-color: var(--button-color-2);
+}
+
+#group-selector:hover, #group-selector-C:hover {
   background-color: var(--hover-color);
 }
 

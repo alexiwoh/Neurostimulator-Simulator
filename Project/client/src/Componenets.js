@@ -527,7 +527,7 @@ export function Macro() {
 
 // Patient Programmer: Pages for Group and lead settings and device information.
 export function GroupsPage() {
-  const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
+  const {curPage, setCurPage, curPage2, setCurPage2, refresh, setRefresh} = useContext(curPageContext);
   const [curSubpage, setCurSubPage] = useState("pain-control");
   const [curSubpage2, setCurSubPage2] = useState("device");
   const [curGroupID, setCurGroupID] = useState(0);
@@ -561,10 +561,6 @@ export function GroupsPage() {
     address: "-",
     contact: "-"
   });
-
-  useEffect(()=>{setCurLeadID(0); setCurGroupID(0); setCurSubPage("pain-control")},[curPage]);
-  useEffect(()=>{setCurLeadID(0); setCurGroupID(0)},[curSubpage]);
-  useEffect(()=>{setCurLeadID(0);},[curGroupID]);
 
   useEffect(()=>{
     if (!matchPage()) return;
@@ -619,7 +615,7 @@ export function GroupsPage() {
           return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, curGroup: data.curValue.currentGroup, leadNames: data.curValue.targets}
         })}); 
     }
-  },[curPage, curSubpage, curSubpage2, curGroupID])
+  },[curPage, curSubpage, curSubpage2, refresh])
 
   // Updates GUI when selected lead changes.
   useEffect(()=>{
@@ -636,7 +632,7 @@ export function GroupsPage() {
     .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
       return {...prev, leadInfo: data.curValue};
     })}); 
-  },[curLeadID, curSubpage, curPage])
+  },[curLeadID, curSubpage, curPage, refresh])
 
   // Updates GUI when selected group changes.
   useEffect(()=>{
@@ -648,33 +644,28 @@ export function GroupsPage() {
     })
     .then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) {setGroupData(prev => {return {...prev, curGroup: data.curValue}})}});
-
     fetch("/api?classname=pprog&param=groupData").then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
       return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, leadNames: data.curValue.targets}
     })});
-
     fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
       return {...prev, leadInfo: data.curValue};
     })}); 
-    setCurLeadID(0);
-  },[curGroupID, curSubpage, curPage])
+  },[curGroupID, curSubpage, curPage, refresh])
 
   function toggleOn() {
     if (!matchPage() || curSubpage !== "pain-control") return;
-
     fetch(`/api?classname=lead&param=on&id=${groupData.leadInfo.id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ setType: 'absolute', setValue: !groupData.leadInfo.on })
     })
-    
-
     fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
       return {...prev, leadInfo: data.curValue};
     })}); 
+    setRefresh(!refresh);
   }
 
   function changeLevel(amount)  {
@@ -690,6 +681,7 @@ export function GroupsPage() {
     .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
       return {...prev, leadInfo: data.curValue};
     })}); 
+    setRefresh(!refresh);
   }  
 
   function setActive(event)  {
@@ -717,6 +709,7 @@ export function GroupsPage() {
     .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
       return {...prev, leadInfo: data.curValue};
     })}); 
+    setRefresh(!refresh);
   }
 
   function getMyInfo()  {
@@ -754,9 +747,9 @@ export function GroupsPage() {
       <fieldset>
         <legend>
           <div id="myinfo-pane" class="groups-tab tab"> 
-            <button id="device-info-button" class="info-pane-button active" onClick={(e)=>{setCurSubPage2("device"); setCurPage("groups"); setActive(e);}}>     Device        </button>
-            <button id="physician-info-button" class="info-pane-button" onClick={(e)=>{setCurSubPage2("physician"); setCurPage("groups"); setActive(e);}}>  Physician     </button>
-            <button id="clinic-info-button" class="info-pane-button" onClick={(e)=>{setCurSubPage2("clinic"); setCurPage("groups"); setActive(e);}}>     Clinic        </button>
+            <button id="device-info-button" class={`info-pane-button ${(curSubpage2 === "device") ? "active" : ""}`} onClick={(e)=>{setCurSubPage2("device"); setCurPage("groups"); setActive(e);}}>     Device        </button>
+            <button id="physician-info-button" class={`info-pane-button ${(curSubpage2 === "physician") ? "active" : ""}`} onClick={(e)=>{setCurSubPage2("physician"); setCurPage("groups"); setActive(e);}}>  Physician     </button>
+            <button id="clinic-info-button" class={`info-pane-button ${(curSubpage2 === "clinic") ? "active" : ""}`} onClick={(e)=>{setCurSubPage2("clinic"); setCurPage("groups"); setActive(e);}}>     Clinic        </button>
           </div>
         </legend>
         {innerJSX}
@@ -774,7 +767,7 @@ export function GroupsPage() {
                 let gr = [];
                 let gi = groupData.groupIDs;
                 let gn = groupData.groupNames;
-                for(let i=0; i< gi.length; i++) gr.push((<option value={gi[i]}> {gn[i]} </option>));
+                for(let i=0; i< gi.length; i++) gr.push((curGroupID != gi[i]) ? (<option value={gi[i]}> {gn[i]} </option>) : (<option value={gi[i]} selected="selected"> {gn[i]} </option>));
                 return gr;
               })()}
           </select>
@@ -785,10 +778,10 @@ export function GroupsPage() {
             <div id="paincontrol-pane" class="groups-tab tab"> 
               { (groupData.groupNames.length > 0) ? 
                 (<>
-                  <button id="lead-button-0" class="info-pane-button active" onClick={(e)=>{setCurLeadID(0); setCurSubPage2("lead-0"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[0]} </button>
-                  <button id="lead-button-1" class="info-pane-button" onClick={(e)=>{setCurLeadID(1); setCurSubPage2("lead-1"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[1]} </button>
-                  <button id="lead-button-2" class="info-pane-button" onClick={(e)=>{setCurLeadID(2); setCurSubPage2("lead-2"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[2]} </button>
-                  <button id="lead-button-3" class="info-pane-button" onClick={(e)=>{setCurLeadID(3); setCurSubPage2("lead-3"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[3]} </button>
+                  <button id="lead-button-0" class={`info-pane-button ${(groupData.leadInfo.index === 0) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(0); setCurSubPage2("lead-0"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[0]} </button>
+                  <button id="lead-button-1" class={`info-pane-button ${(groupData.leadInfo.index === 1) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(1); setCurSubPage2("lead-1"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[1]} </button>
+                  <button id="lead-button-2" class={`info-pane-button ${(groupData.leadInfo.index === 2) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(2); setCurSubPage2("lead-2"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[2]} </button>
+                  <button id="lead-button-3" class={`info-pane-button ${(groupData.leadInfo.index === 3) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(3); setCurSubPage2("lead-3"); setCurPage("groups"); setActive(e);}}>{groupData.leadNames[3]} </button>
                 </>)
                 : (<></>)
               }
@@ -809,7 +802,7 @@ export function GroupsPage() {
     </>) : (<></>)
   }
 
-  function handleExit() {setCurSubPage2("lead-0"); setCurLeadID(0); setCurSubPage("pain-control"); setCurPage("home");  }
+  function handleExit() {setCurPage("home");}
   function matchPage()  {
     let word = curPage.toLowerCase().replace(/\s+/g,"").replace("-","");
     return  word === "groups" || word === "groupspage" || word === "all";
@@ -820,8 +813,8 @@ export function GroupsPage() {
     <fieldset>
     <legend>
       <div id="groups-pane" class="groups-tab tab"> 
-        <button id="pain-control-button" class="group-pane-button active" onClick={(e)=>{setCurSubPage("pain-control"); setCurPage("groups"); setActive(e);}}> Pain Control  </button>
-        <button id="my-info-button" class="group-pane-button" onClick={(e)=>{setCurSubPage("my-info"); setCurPage("groups"); setActive(e);}}>      My Info       </button>
+        <button id="pain-control-button" class={`group-pane-button ${(curSubpage === "pain-control") ? "active" : ""}`} onClick={(e)=>{setCurSubPage("pain-control"); setCurPage("groups"); setActive(e);}}> Pain Control  </button>
+        <button id="my-info-button" class={`group-pane-button ${(curSubpage === "my-info") ? "active" : ""}`} onClick={(e)=>{setCurSubPage("my-info"); setCurPage("groups"); setActive(e);}}>      My Info       </button>
       </div>
     </legend>
     {getMyInfo()}
@@ -852,7 +845,9 @@ export function Settings_C()  {
       "sendable": true,
       "id": 0,
       "index": 0,
-      "stepSize": 0.05
+      "stepSize": 0.05,
+      "anatomy": "-",
+      "strength": "-"
     }
   }); 
   const [data, setData] = useState({
@@ -876,8 +871,7 @@ export function Settings_C()  {
     rampDuration: 1,
     followUp: 4
   });
-  useEffect(()=>{setCurSubPage2("patient")},[curSubpage]);
-  useEffect(()=>{setCurSubPage("profile")},[curPage2]);
+
   useEffect(()=>{
     if (!matchPage()) return;
     if (curSubpage === "profile")  {
@@ -951,8 +945,145 @@ export function Settings_C()  {
           return {...prev, rampDuration: data.curValue}
         })});
       }
+    } else if (curSubpage === "pain-control")  {
+      fetch("/api?classname=pprog&param=groupData").then((res) => {return res.json()})
+      .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+        return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, curGroup: data.curValue.currentGroup, leadNames: data.curValue.targets}
+      })}); 
     }
-  }, [curPage2, curSubpage, curSubpage2]);
+  }, [curPage2, curSubpage, curSubpage2, refresh]);
+
+  // Updates GUI when selected lead changes.
+  useEffect(()=>{
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=group&param=leadIndex&id=${curGroupID}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: curLeadID })
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {setGroupData(prev => {return {...prev, curLead: data.curValue}})}});
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+  },[curLeadID, curSubpage, curPage2, refresh])
+
+  // Updates GUI when selected group changes.
+  useEffect(()=>{
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=pprog&param=currentGroup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: curGroupID })
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {setGroupData(prev => {return {...prev, curGroup: data.curValue}})}});
+    fetch("/api?classname=pprog&param=groupData").then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, leadNames: data.curValue.targets}
+    })});
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+  },[curGroupID, curSubpage, curPage2, refresh])
+
+  function toggleOn() {
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=lead&param=on&id=${groupData.leadInfo.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: !groupData.leadInfo.on })
+    })
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+    setRefresh(!refresh);
+  }
+
+  function changeStepSize(amount)  {
+    
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=lead&param=stepSize&id=${groupData.leadInfo.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'relative', setValue: amount })
+    })
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+    setRefresh(!refresh);
+  }  
+
+  function turnOffAllSimulation() {
+    if (!matchPage() || curSubpage !== "pain-control") return;
+    fetch(`/api?classname=cprog&param=turnOffAllStimulation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setType: 'absolute', setValue: true })  
+    })
+    .then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) {if(data.curValue) {setCurSubPage("pain-control");}}})
+
+    fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()})
+    .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
+      return {...prev, leadInfo: data.curValue};
+    })}); 
+    setRefresh(!refresh);
+  }
+
+  function getPainControl()  {
+    return (curSubpage === "pain-control") ? (<>
+      <div>
+        <div class="group-select">
+          <select name="group-selector" id="group-selector-C" onChange={(e)=>{setCurGroupID(Number(e.target.value));}}>
+            {(()=>{
+                let gr = [];
+                let gi = groupData.groupIDs;
+                let gn = groupData.groupNames;
+                for(let i=0; i< gi.length; i++) gr.push((curGroupID != gi[i]) ? (<option value={gi[i]}> {gn[i]} </option>) : (<option value={gi[i]} selected="selected"> {gn[i]} </option>));
+                return gr;
+              })()}
+          </select>
+        </div>
+        <br></br>
+        <fieldset>
+          <legend>
+            <div id="paincontrol-pane-C" class="groups-tab-cprog tab"> 
+              { (groupData.groupNames.length > 0) ? 
+                (<>
+                  <button id="lead-button-0-C" class={`info-pane-button ${(groupData.leadInfo.index === 0) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(0); setCurSubPage2("lead-0"); setCurPage2("settings"); setActive(e);}}>{groupData.leadNames[0]} </button>
+                  <button id="lead-button-1-C" class={`info-pane-button ${(groupData.leadInfo.index === 1) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(1); setCurSubPage2("lead-1"); setCurPage2("settings"); setActive(e);}}>{groupData.leadNames[1]} </button>
+                  <button id="lead-button-2-C" class={`info-pane-button ${(groupData.leadInfo.index === 2) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(2); setCurSubPage2("lead-2"); setCurPage2("settings"); setActive(e);}}>{groupData.leadNames[2]} </button>
+                  <button id="lead-button-3-C" class={`info-pane-button ${(groupData.leadInfo.index === 3) ? "active" : ""}`} onClick={(e)=>{setCurLeadID(3); setCurSubPage2("lead-3"); setCurPage2("settings"); setActive(e);}}>{groupData.leadNames[3]} </button>
+                </>)
+                : (<></>)
+              }
+            </div>
+          </legend>
+          <div>
+            <div class="up-dn-pane-cprog data-cprog">
+              <button class="on-btn" onClick={toggleOn} style={{"animation":(groupData.leadInfo.on) ? "on-blink-C 1.0s infinite" : "none"}}>{(groupData.leadInfo.on) ? "ON" : "OFF"}</button>
+              <label style={{"margin-left":"10px"}}>Step Size:</label>
+              <button class="up-dn-btn" onClick={()=>{changeStepSize(-1)}}  style={{"margin-left":"10px","animation":(groupData.leadInfo.on) ? "on-blink-C 1.0s infinite" : "none"}}> - </button>
+              <div style={{"width":"15%", "display": "inline-block", "text-align": "center"}}> {(groupData.leadInfo.stepSize).toFixed(2)} </div>
+              <button class="up-dn-btn" onClick={()=>{changeStepSize(1)}}   style={{"animation":(groupData.leadInfo.on) ? "on-blink-C 1.0s infinite" : "none"}}> + </button>
+              <div> <label style={{"width":"30%", "display":"inline-block"}}> Group name: </label> <input id="groupNameBox" type="text" placeholder={groupData.groupNames[groupData.curGroup]}/> </div>
+              <div> <label style={{"width":"30%", "display":"inline-block"}}> Lead name: </label> <input id="leadNameBox" type="text" placeholder={groupData.leadNames[groupData.leadInfo.index]} /> </div>
+              <div> <label style={{"width":"30%", "display":"inline-block"}}> Anatomy: </label> <input id="anatomyBox" type="text" placeholder={groupData.leadInfo.anatomy}/> </div>
+              <div> <label style={{"width":"30%", "display":"inline-block"}}> Strength: </label> <input id="strengthBox" type="text" placeholder={groupData.leadInfo.strength}/> </div>
+            </div>
+          </div>
+        </fieldset>
+        <button class="all-off-btn" onClick={turnOffAllSimulation}> Turn Off All Stimulation </button>
+      </div>
+    </>) : (<></>)
+  }
 
   function getProfile() {
     let innerJSX = (<></>);
@@ -1005,9 +1136,9 @@ export function Settings_C()  {
         <fieldset>
           <legend>
             <div id="profile-pane-cprog" class="groups-tab-cprog tab"> 
-              <button id="patient-info-button-cprog" class="profile-pane-button-cprog active" onClick={(e)=>{setCurSubPage2("patient"); setCurPage2("settings"); setActive(e);}}>     Patient        </button>
-              <button id="clinic-info-button-cprog" class="profile-pane-button-cprog" onClick={(e)=>{setCurSubPage2("clinic"); setCurPage2("settings"); setActive(e);}}>  Clinic     </button>
-              <button id="ns-info-button-cprog" class="profile-pane-button-cprog" onClick={(e)=>{setCurSubPage2("NS"); setCurPage2("settings"); setActive(e);}}>  NS/System     </button>
+              <button id="patient-info-button-cprog" class={`profile-pane-button-cprog ${(curSubpage2 === "patient") ? "active" : ""}`} onClick={(e)=>{setCurSubPage2("patient"); setCurPage2("settings"); setActive(e);}}>     Patient        </button>
+              <button id="clinic-info-button-cprog" class={`profile-pane-button-cprog ${(curSubpage2 === "clinic") ? "active" : ""}`} onClick={(e)=>{setCurSubPage2("clinic"); setCurPage2("settings"); setActive(e);}}>  Clinic     </button>
+              <button id="ns-info-button-cprog" class={`profile-pane-button-cprog ${(curSubpage2 === "NS" || curSubpage2 === "system") ? "active" : ""}`} onClick={(e)=>{setCurSubPage2("NS"); setCurPage2("settings"); setActive(e);}}>  NS/System     </button>
             </div>
           </legend>
           {innerJSX}
@@ -1026,7 +1157,7 @@ export function Settings_C()  {
     // Make this button 'active'.
     document.getElementById(event.target.id).className +=  " active";
   }
-  function handleExit() {setCurPage2("home"); setCurSubPage("profile"); setCurSubPage2("patient");}
+  
   function handleSubmit() {
     if(!matchPage())  return;
     if (curSubpage === "profile")  {
@@ -1065,7 +1196,23 @@ export function Settings_C()  {
         .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, rampDuration: data.curValue}}); document.getElementById("sRamp").value = "";} });
       }
     }
+    if(curSubpage === "pain-control") {
+      fetch(`/api?classname=lead&param=targetName&id=${groupData.leadInfo.id}`, {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("leadNameBox").value })})
+      fetch(`/api?classname=group&param=name&id=${curGroupID}`, {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("groupNameBox").value })})
+      fetch(`/api?classname=lead&param=anatomy&id=${groupData.leadInfo.id}`, {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("anatomyBox").value })})
+      fetch(`/api?classname=lead&param=strength&id=${groupData.leadInfo.id}`, {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("strengthBox").value })})
+
+      fetch("/api?classname=pprog&param=groupData").then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, leadNames: data.curValue.targets}})});
+      fetch(`/api?classname=group&param=leadInfo&id=${curGroupID}`).then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setGroupData(prev => {return {...prev, leadInfo: data.curValue};});  }}); 
+      document.getElementById("leadNameBox").value = "";
+      document.getElementById("groupNameBox").value = "";
+      document.getElementById("anatomyBox").value = "";
+      document.getElementById("strengthBox").value = "";
+    }
+    setCurPage("home");
+    setRefresh(!refresh);
   }
+  function handleExit() {setCurPage2("home");}
   function matchPage()  {
     let word = curPage2.toLowerCase().replace(/\s+/g,"").replace("-","");
     return  word === "settings" || word === "settingspage" || word === "all";
@@ -1076,12 +1223,12 @@ export function Settings_C()  {
     <fieldset>
     <legend>
       <div id="groups-pane-cprog" class="groups-tab-cprog tab"> 
-        <button id="profile-button-cprog" class="group-pane-button cprog-btn active" onClick={(e)=>{setCurSubPage("profile"); setCurPage2("settings"); setActive(e);}}> Profile  </button>
-        <button id="stim-cprog" class="group-pane-button cprog-btn" onClick={(e)=>{setCurSubPage("stim"); setCurPage2("settings"); setActive(e);}}>      Stim       </button>
-        <button id="group-cprog" class="group-pane-button cprog-btn" onClick={(e)=>{setCurSubPage("group"); setCurPage2("settings"); setActive(e);}}>      Group       </button>
+        <button id="profile-button-cprog" class={`group-pane-button cprog-btn ${(curSubpage === "profile") ? "active" : ""}`} onClick={(e)=>{setCurSubPage("profile"); setCurPage2("settings"); setActive(e);}}> Profile  </button>
+        <button id="group-cprog" class={`group-pane-button cprog-btn ${(curSubpage === "pain-control") ? "active" : ""}`} onClick={(e)=>{setCurSubPage("pain-control"); setCurPage2("settings"); setActive(e);}}>      Stim       </button>
       </div>
     </legend>
     {getProfile()}
+    {getPainControl()}
     </fieldset>
     <BottomButtons handleExit={handleExit} handleSave={handleSubmit} />
   </>) : (<></>)
@@ -1103,8 +1250,6 @@ export function BottomButtons(params) {
 
 
 
-/***                                        ***/
-/*** EXTRA CLINICIAN PROGRAMMER COMPONENETS ***/
-/***                                        ***/
+
 
 

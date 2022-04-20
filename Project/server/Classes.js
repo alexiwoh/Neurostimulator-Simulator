@@ -312,7 +312,9 @@ class Group {
   set leadIDs (a) {;}
   get leadTargets() {return {targets: this.leads.map(l => l.targetName), sendable: true};}
   set leadTargets (a) {;}
-  get leadInfo()  {return {on:this.leads[this.leadIndex].on, level:this.leads[this.leadIndex].level, target:this.leads[this.leadIndex].targetName, sendable: true, id: this.leadID, index: this.leadIndex, stepSize: this.leads[this.leadIndex].stepSize};}
+  get leadInfo()  {return {on:this.leads[this.leadIndex].on, level:this.leads[this.leadIndex].level, target:this.leads[this.leadIndex].targetName, 
+    sendable: true, id: this.leadID, index: this.leadIndex, stepSize: this.leads[this.leadIndex].stepSize * Lead.stepBase,
+    anatomy: this.leads[this.leadIndex].anatomy, strength: this.leads[this.leadIndex].strength};}
   set leadInfo(s) {;}
   
   getDataAsText() {
@@ -339,22 +341,22 @@ class Lead {
     this._modelNumber = "MN10450";
     this._targetName = ['L Foot', 'R Foot', 'L Leg', 'R Leg','L Arm','R Arm','Back'][randInt(0,6)]; // Body part to be targeted by Lead setting.
     this.#electrodes = ['+','-','N','N'];
-    this.#impedeace = 65534; 
+    this.#impedance = 65534; 
     this.#location = "''"; 
     this._stepSize = randInt(1,3); // Affects how much values change by pressing the arrow buttons. Ranges from 1-3 and affects multiple parameters.
     this.#pulseAmplitude = 0; 
     this.#maxAmplitude = 6000; 
     this.#pulseWidth = 300; 
     this.#pulseFrequency = 20;
-    this.#anatomy = "Foot (arch)"; 
-    this.#strength = "Burning";
+    this._anatomy = ['Back', 'Front'][randInt(0,1)]; // Where the stimulus is applied.
+    this._strength = ['Burning', 'Soft', 'Normal'][randInt(0,2)]; // Qualitative description of strength.
   }
   getDataAsText() {
     let s = "\n";
     s += "Lead ID: " + this.id.toString(10);
     s += ` --- State: ${this.on ? "ON" : "OFF"} --- Level: ${this.level} --- Lot #: ${this.lotNumber} --- Model #: ${this.modelNumber}`;
-    s += ` --- Target Name: ${this.targetName} --- Anatomy: ${this.#anatomy} --- Strength: ${this.#strength}`;
-    s += `\nElectrodes: [${this.#electrodes}] --- Impedance: ${this.#impedeace} Ω --- Location: ${this.#location}`;
+    s += ` --- Target Name: ${this.targetName} --- Anatomy: ${this.anatomy} --- Strength: ${this.strength}`;
+    s += `\nElectrodes: [${this.#electrodes}] --- Impedance: ${this.#impedance} Ω --- Location: ${this.#location}`;
     s += ` --- Pulse Amp: ${this.#pulseAmplitude}μA (max: ${this.#maxAmplitude}μA) --- Pulse Width: ${this.#pulseWidth}μs --- Pulse Freq: ${this.#pulseFrequency}Hz`;
     s += `--- Step Size: ${{1 : ">", 2 : ">>", 3 : ">>>"}[this._stepSize]}`;
     return s;
@@ -371,18 +373,20 @@ class Lead {
   get modelNumber() {return this._modelNumber;}
   set modelNumber(s)  {if(typeof s == 'string' && /^[a-zA-Z]*[0-9]*$/.test(s) && s.length < 10)  this._modelNumber = s;}
   get targetName()  {return this._targetName;} 
-  set targetName(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length < 20) this._targetName = s;}
+  set targetName(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length <= 20) this._targetName = s;}
   #electrodes; // Electreode settings: + (positive), - (negative), N (neutral). There must be at least one positive and one negative electrode.
-  #impedeace; // Active impedence in Ohms. 65534 Ω indicates an open or missing lead.
+  #impedance; // Active impedence in Ohms. 65534 Ω indicates an open or missing lead.
   #location; // Spinal level where stimulation therapy is delivered by this lead.
-  get stepSize()  {return this._stepSize * Lead.stepBase;} 
-  set stepSize(n)  {if(typeof n == 'number' ) this._stepSize = Number(Math.max(1,Math.min(n,3)));}
+  get stepSize()  {return this._stepSize;} 
+  set stepSize(n)  {if(typeof n == 'number' ) this._stepSize = Math.round(Math.max(1,Math.min(n,3)));}
   #pulseAmplitude; // Amplitude in μA. Ranges from 0 to 6000μA by default.
   #maxAmplitude; // 6000μA by default.
   #pulseWidth; // Ranges from 40 - 1000μs.
   #pulseFrequency; // Ranges from 4 – 80 Hz.
-  #anatomy; // Where the stimulus is applied.
-  #strength; // Qualitative description of strength.
+  get anatomy() {return this._anatomy;}
+  set anatomy(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length < 30) this._anatomy = s;}
+  get strength() {return this._strength;} 
+  set strength(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length < 30) this._strength = s;}
 }
 
 class Person {
@@ -438,7 +442,6 @@ class Person {
 
   getDataAsText() {
     let s = "\n";
-
   }
 
 }
@@ -460,7 +463,6 @@ class Doctor extends Person {
   performTrial(patient)  {}
   getDataAsText() {
     let s = "\n";
-  
   }
 }
 
@@ -476,7 +478,6 @@ class Patient extends Person {
     if(d && Object.prototype.toString.call(d) === "[object Date]" && !isNaN(d))
     this._dob = d;
   }
-
 
   getDataAsText() {
     let s = "\n";
