@@ -1,20 +1,16 @@
 
 /*getDataAsText() is a debug function that returns all variables of the Class in text form.*/
-//const { set } = require(".");
 
 const MAX_ID = 1000000
 
+// Class that links multiple Programmer devices.
 class Model {
-  // Class that links multiple Programmer devices.
   constructor(m_id=0) {
     this._id = m_id;
-    //let d = new Doctor();
-    //let p = new Patient();
     this.pProg = new PatientProgrammer(); // Patient programmer object.
     this.cProg = new ClinicianProgrammer(); // Clinician programmer object.
-    this.cProg.prog = this.pProg;
+    this.cProg.prog = this.pProg; // Links pProg to cProg so they can sync data.
     Lead.lid = 0; Group.gid = 0;
-    
   } 
   get id()  {return this._id}
   set id(id)  {
@@ -25,19 +21,16 @@ class Model {
       return true;}
     catch(err) {return false;}
   }
-  // Prints all data as text.
   getDataAsText() {
     let s = "\n"
     s += "Model ID: " + this.id.toString(10) + "\n------------\n";
     s += this.pProg.getDataAsText() + "\n-----------\n" + this.cProg.getDataAsText();
     return s;
   }
-  init()  {}
 }
 
+// Class representing a Programmer device. 
 class Programmer {
-  // Class representing a Programmer device. 
-
   #tid; #tid2; // Stores setInterval() objects.
   constructor(prog = undefined, type="patient") {
     this._prog = (prog && Object.prototype.toString.call(prog) === "[object Programmer]") ? prog : undefined;
@@ -54,9 +47,9 @@ class Programmer {
       for(let l = 0; l < this.leads.length; l++)  {
         if(this.stim.type === "") break;
         let li = this.leads[l];
-        if(li.on) this.batteryLevel -= li.level/150;
+        if(li.on) this.batteryLevel -= li.level/175;
       }
-    }, 5000);
+    }, 5000); // Decrease battery percentage based on Leads' 'level' and Programmer 'on' variables.
   }
 
   initDefaults(type="patient")  {
@@ -74,6 +67,7 @@ class Programmer {
     this._date = new Date(); // Current date.
     this._waitTime = 0;
     this._leads = []; // List of Lead settings.
+    // Stores all Lead objects of all Group objects in this._leads.
     for (let g = 0; g < this.groups.length; g++) {
       let gr = this.groups[g];
       for (let l=0; l <gr.leads.length; l++) { 
@@ -82,11 +76,12 @@ class Programmer {
       }
     }
     this.leads[0].on = false; this.leads[0].level = 0.0;
-    this._patient = new Patient();
-    this._doctor = new Doctor(); 
-    this._prog = undefined;
+    this._patient = new Patient(); // Patient that is treated.
+    this._doctor = new Doctor(); // Physician. 
+    this._prog = undefined; // Programmer that is linked to this object for syncing purposes.
   }
 
+  // Getter/setters.
   get type() {return this._type;}
   set type(t) { 
     if(typeof t == 'string' && /\w*/.test(t)) {
@@ -159,7 +154,6 @@ class Programmer {
   set patient(a) {if(a && a instanceof Patient) this._patient = a;}
   get doctor()  {return this._doctor;}
   set doctor(a) {if(a && a instanceof Doctor) this._doctor = a;}
-
   get prog()  {return this._prog;}
   set prog(p)  {
     if(p instanceof Programmer) {
@@ -181,7 +175,6 @@ class Programmer {
 
   // Prints all data as text.
   getDataAsText() {
-   
     let s = "\n";
     s += ((this.type.toLowerCase() in ["clinician", "patient"]) ? (`${this.type[0].toUpperCase() + this.type.substring(1).toLowerCase()}`) : this.type);
     s += ` --- Battery Level: ${this.batteryLevel}`;
@@ -335,7 +328,8 @@ class Lead {
   static set stepBase(n)  {;}
   constructor() {
     this._id = Lead.lid++; 
-    this._on = [true,false][randInt(0,1)]; // Lead on/off state.
+    //this._on = [true,false][randInt(0,1)]; // Lead on/off state. Randomize to start.
+    this._on = false; // Start all leads off.
     this._level = Number((randInt(0,100)/100).toFixed(2)); // Lead intensity.
     this._lotNumber = "100001"; 
     this._modelNumber = "MN10450";

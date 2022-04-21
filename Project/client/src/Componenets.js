@@ -1,5 +1,4 @@
 import { useState, createContext, useContext, useEffect } from "react";
-//import React from "react"
 import "./Componenets.css";
 import HumanBody from "./images/HumanBody.png";
 
@@ -65,21 +64,58 @@ export function AppComponents(params) {
               <GroupsPage />
               <Footer />
             </div>
+            <h1 id="deviceName1" class="deviceName">Patient Programmer</h1>
           </div>
-          <div id="deviceBox2" class="deviceBox">
-            <Clock_C />
-            <HomePage_C />
-            <ProgrammerInfoPage_C />
-            <Settings_C />
-            <Footer_C />
+          <div id="outerDeviceBox2" class="outerDeviceBox">  
+            <div id="deviceBox2" class="deviceBox">
+              <Clock_C />
+              <HomePage_C />
+              <ProgrammerInfoPage_C />
+              <Settings_C />
+              <Footer_C />
+            </div>
+            <h1 id="deviceName2" class="deviceName">Clinical Programmer</h1> 
           </div>
         </div>
       </curPageContext.Provider>
-      
+      <Documentation />
     </>
   );
 }
 
+// Project Documentation to be displayed below the devices. 
+export function Documentation()  {
+  return (
+  <>
+    <div id="documentation" class="documentation" style={{"margin-left": "5%"}}>
+      <h1> Neurostimulator Simulator </h1> 
+      <h2> Based on the Axium Neurostimulator System – P150004 </h2>
+      <h3>Summary</h3>
+      <p>- The Patient Programmer device is on the left and the Clinical Programmer device is on the right.</p>
+      <p>- Both devices can be turned on with the "Turn On/Off" button on the home page.</p>
+      <p>- A device's battery (top-left) recharges when it is <span class="italics">Off</span> and discharges when it is on.</p>
+      <p>- At any point press the "Exit" button to go to the home page.</p>
+      <p>- Clicking the "Program Settings" button to go the programmer information page.</p>
+      <p class="p1">- In this page you can see device information and change the current date and time for the device.</p>
+      <p class="p1">- You can also change which neurostimulator is connected to the device. Possible values are TNS, INS, and unbound.</p>
+      <p>- The "Stimulation" button on the Patient Programmer allows you to change stimulation settings and see more specific health-related inforamtion.</p>
+      <p class="p1">- Clicking the "Pain Control" tab allows you to select a stimulation group from the dropdown menu and change settings for the group's leads.</p>
+      <p class="p2">- A lead can be selected by clicking one of the four sub tabs.</p>
+      <p class="p2">- The "On/Off" button enables/disables the lead.</p>
+      <p class="p2">- The "+/-" button increases/decreases the intensity of the lead stimulation.</p>
+      <p class="p1">- Clicking the "My Info" tab allows you to see device, physician (doctor), and clinic-specific information by clicking their respective tabs.</p>
+      <p>- The "Settings" button on the Clinical Programmer allows you to change stimulation settings and change more specific health-related inforamtion.</p>
+      <p class="p1">- Clicking the "Profile" tab allows you to see patient, clinic, and system-specific information by clicking their respective sub tabs.</p>
+      <p class="p2">- When a sub tab is selected you can edit the various parameters for the device.</p>
+      <p class="p1">- Clicking the "Stim" tab allows you to select a stimulation group from the dropdown menu and change settings for the group's leads.</p>
+      <p class="p2">- A lead can be selected by clicking one of the four sub tabs.</p>
+      <p class="p2">- The "On/Off" button enables/disables the lead.</p>
+      <p class="p2">- The "+/-" button increases/decreases the step size of the lead stimulation. This controls the rate of intensity increase on the Patient Programmer.</p>
+    </div>
+  </>)
+}
+
+// Test page for debugging purposes.
 export function Page1(params)  {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
   const [serialNo, setSerialNo] = useState("");
@@ -106,6 +142,7 @@ export function Page1(params)  {
     : (<><div style={border}></div></>)
 }
 
+// Test page for debugging purposes.
 export function Page2(params)  {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
   const [name, setName] = useState("");
@@ -1071,7 +1108,7 @@ export function Settings_C()  {
               <button class="on-btn" onClick={toggleOn} style={{"animation":(groupData.leadInfo.on) ? "on-blink-C 1.0s infinite" : "none"}}>{(groupData.leadInfo.on) ? "ON" : "OFF"}</button>
               <label style={{"margin-left":"10px"}}>Step Size:</label>
               <button class="up-dn-btn" onClick={()=>{changeStepSize(-1)}}  style={{"margin-left":"10px","animation":(groupData.leadInfo.on) ? "on-blink-C 1.0s infinite" : "none"}}> - </button>
-              <div style={{"width":"15%", "display": "inline-block", "text-align": "center"}}> {(groupData.leadInfo.stepSize).toFixed(2)} </div>
+              <div style={{"width":"15%", "display": "inline-block", "text-align": "center"}}> {(groupData.leadInfo.stepSize * 100).toFixed(0)}% </div>
               <button class="up-dn-btn" onClick={()=>{changeStepSize(1)}}   style={{"animation":(groupData.leadInfo.on) ? "on-blink-C 1.0s infinite" : "none"}}> + </button>
               <div> <label style={{"width":"30%", "display":"inline-block"}}> Group name: </label> <input id="groupNameBox" type="text" placeholder={groupData.groupNames[groupData.curGroup]}/> </div>
               <div> <label style={{"width":"30%", "display":"inline-block"}}> Lead name: </label> <input id="leadNameBox" type="text" placeholder={groupData.leadNames[groupData.leadInfo.index]} /> </div>
@@ -1163,37 +1200,49 @@ export function Settings_C()  {
     if (curSubpage === "profile")  {
       if(curSubpage2 === "patient") {
         fetch("/api?classname=patient&param=name", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("pName").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pName: data.curValue}}); document.getElementById("pName").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pName: data.curValue}}); } });
         fetch("/api?classname=patient&param=id", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("pID").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pID: data.curValue}}); document.getElementById("pID").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pID: data.curValue}}); } });
         fetch("/api?classname=patient&param=dob", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("pDOB").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pDOB: new Date(data.curValue)}}); document.getElementById("pDOB").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pDOB: new Date(data.curValue)}}); } });
         fetch("/api?classname=patient&param=notes", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("notesBox").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pNotes: data.curValue}}); document.getElementById("notesBox").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, pNotes: data.curValue}}); } });
+        document.getElementById("pName").value = "";
+        document.getElementById("pID").value = "";
+        document.getElementById("pDOB").value = "";
+        document.getElementById("notesBox").value = "";
       }
       if(curSubpage2 === "clinic")  {
         fetch("/api?classname=doctor&param=name", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("dName").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, dName: data.curValue}}); document.getElementById("dName").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, dName: data.curValue}}); } });
         fetch("/api?classname=doctor&param=clinicName", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("cName").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, cName: data.curValue}}); document.getElementById("cName").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, cName: data.curValue}}); } });
         fetch("/api?classname=doctor&param=phoneNumber", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("cPhone").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, phone: data.curValue}}); document.getElementById("cPhone").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, phone: data.curValue}}); } });
         fetch("/api?classname=doctor&param=email", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("cEmail").value })})
         .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, email: data.curValue}}); document.getElementById("cEmail").value = "";} });
         fetch("/api?classname=doctor&param=address", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("cAddress").value })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, address: data.curValue}}); document.getElementById("cAddress").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, address: data.curValue}}); } });
+        document.getElementById("dName").value = "";
+        document.getElementById("cName").value = "";
+        document.getElementById("cPhone").value = "";
+        document.getElementById("cAddress").value = "";
       }
       if(curSubpage2 === "NS" || curSubpage2 === "system")  {
         fetch("/api?classname=cstim&param=implantDate", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: document.getElementById("implantDate").value })})
         .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, implantDate: new Date(data.curValue)}}); document.getElementById("implantDate").value = "";} });
         fetch("/api?classname=cprog&param=impedanceInterval", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: Number(document.getElementById("sImpedance").value) })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, impedance: data.curValue}}); document.getElementById("sImpedance").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, impedance: data.curValue}}); } });
         fetch("/api?classname=cprog&param=followUpPeriod", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: Number(document.getElementById("sFollowUp").value) })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, followUp: data.curValue}}); document.getElementById("sFollowUp").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, followUp: data.curValue}}); } });
         fetch("/api?classname=cprog&param=stimOffTime", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: Number(document.getElementById("sStimOff").value) })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, stimOff: data.curValue}}); document.getElementById("sStimOff").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, stimOff: data.curValue}}); } });
         fetch("/api?classname=cprog&param=rampDuration", {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ setType: 'absolute', setValue: Number(document.getElementById("sRamp").value) })})
-        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, rampDuration: data.curValue}}); document.getElementById("sRamp").value = "";} });
+        .then((res) => {return res.json()}).then((data)=>{if(data && data.curValue != undefined) {setData(prev => {return {...prev, rampDuration: data.curValue}}); } });
+        document.getElementById("sImpedance").value = "";
+        document.getElementById("sFollowUp").value = "";
+        document.getElementById("sStimOff").value = "";
+        document.getElementById("sRamp").value = "";
       }
     }
     if(curSubpage === "pain-control") {
