@@ -17,7 +17,7 @@ Summary
 
 - A device's battery (top-left) recharges when it is Off and discharges when it is on.
 
-- At any point press the "Exit" button to go to the home page.
+- At any point press the "Exit" button to go to the home page and "Save Settings" to save entered values.
 
 - Clicking the "Program Settings" button to go the programmer information page.
 
@@ -50,3 +50,5 @@ Summary
     - The "On/Off" button enables/disables the lead.
 
     - The "+/-" button increases/decreases the step size of the lead stimulation. This controls the rate of intensity increase on the Patient Programmer.
+
+    - When lead settings are saved, the Patient Programmer restarts.

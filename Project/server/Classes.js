@@ -1,3 +1,6 @@
+/***                        ***/
+/*** CLASSES FOR SIMULATION ***/
+/***                        ***/
 
 /*getDataAsText() is a debug function that returns all variables of the Class in text form.*/
 
@@ -44,24 +47,24 @@ class Programmer {
       if(this.batteryLevel <= 0)  {this.on = false; this.batteryLevel = 0.0;}
       if(this.batteryLevel >= 1)  {this.batteryLevel = 1.0;}
       if(!this.on)  {this.batteryLevel += 0.2; return;}
-      for(let l = 0; l < this.leads.length; l++)  {
+
+      let leads = this.groups[this.currentGroup].leads;
+      for(let l = 0; l < leads.length; l++)  {
         if(this.stim.type === "") break;
-        let li = this.leads[l];
-        if(li.on) this.batteryLevel -= li.level/175;
+        let li = leads[l];
+        if(li.on) this.batteryLevel -= li.level/25;
       }
     }, 5000); // Decrease battery percentage based on Leads' 'level' and Programmer 'on' variables.
   }
 
   initDefaults(type="patient")  {
     this._type = type; // Type of programmer: Patient or Clinician.
-    this._on = true; // Programmer on/off state.
-    this._hibernate = false; // Hibernation on/off state.
+    this._on = false; // Programmer on/off state.
     this._batteryLevel = 1.0; // Battery level of device.
     this._currentGroup = randInt(0,3); // Currently selected group setting.
     this._serialNo = "SC1005"; // Serial number.
     this._versionNo = "5.0.2.0"; // Version number.
     this._manufacturerDate = new Date("02-Apr-2014"); // Manufacturer date.
-    this._alerts = []; // Array of strings.
     this._stim = new Stimulator(); // Stimulator.
     this._groups = [new Group("Awake"),new Group("Sleeping"),new Group("Sitting"),new Group("Napping"), new Group("Idle"), new Group("Quick Treatment"), new Group("")]; // List of Group settings.
     this._date = new Date(); // Current date.
@@ -91,8 +94,6 @@ class Programmer {
   }
   get on() {return this._on;}
   set on(on) {if(typeof on == 'boolean') this._on = on;}
-  get hibernate() {return this._hibernate;}
-  set hibernate(h)  {if(typeof h == 'boolean') this._hibernate = h;}
   get batteryLevel()  {return Number(this._batteryLevel.toFixed(2));}
   set batteryLevel(p)  {if(typeof p == 'number') this._batteryLevel = (Math.max(0,Math.min(p,1)));}
   get currentGroup()  {return this._currentGroup;}
@@ -103,8 +104,6 @@ class Programmer {
   set versionNo(v)  {if(typeof v == 'string' && /^([0-9]*(\.)){3}[0-9]*$/.test(v) && v.length < 20) this._versionNo = v;}
   get manufacturerDate()  {return this._manufacturerDate.toDateString();}
   set manufacturerDate(d) {if(d && Object.prototype.toString.call(d) === "[object Date]" && !isNaN(d)) this._manufacturerDate = d;}
-  get alerts()  {return this._alerts;}
-  set alerts(a) {;}
   get stim()  {return this._stim;}
   set stim(d) {if(d && d instanceof Stimulator) this._stim = d;}
   get groups()  {return this._groups;}
@@ -120,7 +119,7 @@ class Programmer {
   }
   get waitTime()  {return this._waitTime;}
   set waitTime(w) {if(typeof w == "number" && w >= 0 && w < 3600) this._waitTime = w;}
-  get groupData()  {return {groupIDs: this.groups.map(g => g.id), targets: this.groups[this.currentGroup].leadTargets.targets, groups: this.groups.map(g => g.name), currentGroup: this.currentGroup, sendable: true};}
+  get groupData()  {return {groupIDs: this.groups.map(g => g.id), targets: this.groups[this.currentGroup].leadTargets.targets, groups: this.groups.map(g => g.name), currentGroup: this.currentGroup, sendable: true};} // Returns object with many values related to the group/lead information.
   set groupData(s) {;}
   get stimType()  {return this.stim.type;}
   set stimType(s) {
@@ -131,7 +130,7 @@ class Programmer {
     else if (x === "INS") y = "";
     else y = 0;
     this.stim.type = y;
-  }
+  } // Changes the Stimulator type from TNS -> INS -> <unbounded> -> TNS -> ...
   get turnOffAllStimulation() {
     for (let g=0; g<this.groups.length; g++) {
       let gr = this.groups[g];
@@ -140,7 +139,7 @@ class Programmer {
       }
     }
     return true;
-  }
+  } // Returns whether all leads are off.
   set turnOffAllStimulation(a) {
     if (a === false)  return;
     for (let g=0; g<this.groups.length; g++) {
@@ -149,7 +148,7 @@ class Programmer {
         gr.leads[l].on = false;
       }
     }
-  }
+  } // Turns off all leads.
   get patient()  {return this._patient;}
   set patient(a) {if(a && a instanceof Patient) this._patient = a;}
   get doctor()  {return this._doctor;}
@@ -164,14 +163,7 @@ class Programmer {
       this._groups = p.groups;
       this._leads = p.leads;
     }
-  }
-
-  connectStimulator(stim) {this.stim = stim;}
-  chargeDevice(amt) {this.batteryLevel += amt;}
-  endAllSimulation() {}
-  saveSettings(settings) {}
-  exit() {}
-
+  } // Links the Programmer, p, to this one. Links some of their variables so that changes are synced between devices.
 
   // Prints all data as text.
   getDataAsText() {
@@ -182,7 +174,6 @@ class Programmer {
     s += `\nState: ${this.on ? "ON" : "OFF"} --- Hibernate: ${this.hibernate ? "ON" : "OFF"} --- curGroup: ${this.currentGroup} --- Date: ${this.date}`;
     s += `\nSerial #: ${this.serialNo} --- Software Version: ${this.versionNo} --- Manufacturer Date: ${this.manufacturerDate}`;
     s += `\n Alerts: [${this.alerts}] --- numLeads: ${this.leads.length}`
-    //s += this.leads.map(l => l.getDataAsText()).join("");
     s += this.groups.map(g => g.getDataAsText()).join("");
     return s;
   }
@@ -202,7 +193,6 @@ class ClinicianProgrammer extends Programmer {
     this._rampDuration = 1; // How long it takes (in seconds) for the NS to reach the requested amplitude.
     this._impedanceInterval = 6; // The frequency with which you want the system to measure lead impedance, in hours.
     this._followUpPeriod = 4; // Follow up period before next appointment, in weeks. 
-    this.key = "";
     this.stim.name = "Clinician Stimulator";
   }
 
@@ -214,13 +204,11 @@ class ClinicianProgrammer extends Programmer {
   set stimOffTime(a)  {if(typeof a == "number" && a > 0 && a < 3600*24) this._stimOffTime = a;}
   get rampDuration()  {return this._rampDuration;}
   set rampDuration(a)  {if(typeof a == "number" && a > 0 && a < 3600) this._rampDuration = a;}
-  get password()  {return "**********";}
-  set password(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length < 20)  this._password = s;}
   get connected() {return this.stim === this.prog.stim;}
   set connected(a)  {
     if(a === true) this.stim = this.prog.stim;
     else this.stim = undefined;
-  }
+  } // Connects a stimulator device. 
   get connect() {return this.connected;}
   set connect(a)  {this.connected = a;}
 
@@ -233,11 +221,11 @@ class ClinicianProgrammer extends Programmer {
   }
 }
 
+// Class representing a Stimulator: INS or TNS. 
 class Stimulator {
-  // Class representing a Stimulator: INS or TNS. 
   constructor(name="Stimulator",type="TNS",imagePath="") {
     this._name = name; 
-    this._type = type;
+    this._type = type; // Type of stimulator conencted: TNS, INS, or "" (unbounded, ie. not connected).
     this._imagePath = imagePath; // Path to image file representing this stimulator.
     this._SN = "CB0848"; // Simulator serial number.
     this._versionNo = "4.0.5.1"; // Version number.
@@ -275,6 +263,7 @@ class Stimulator {
   }
 }
 
+// Class that represents a Group that stores settings for multiple Lead objects.
 class Group {
   static _gid = 0; // id counter. 
   static get gid()  {return Group._gid;}
@@ -284,8 +273,8 @@ class Group {
     this._id = Group.gid++; 
     this._name = name;
     this._leads = [new Lead(),new Lead(),new Lead(),new Lead()]; // List of Lead settings.
-    this._curLeadID = this._leads[0].id;
-    this._curLeadIndex = 0;
+    this._curLeadID = this._leads[0].id; // id of currently selected Lead in array.
+    this._curLeadIndex = 0; // index of array of currently selected Lead.
     this._imagePath = ""; // Path to image file representing this stimulator.
   }  
 
@@ -301,13 +290,13 @@ class Group {
   set leadID(n) {if(typeof n == 'number' && n >= 0 && n < MAX_ID) this._curLeadID = n;}
   get leadIndex()  {return this._curLeadIndex;}
   set leadIndex(n) {if(typeof n == 'number' && n >= 0 && n < this.leads.length) {this._curLeadIndex = n; this.leadID = this.leads[this.leadIndex].id}}
-  get leadIDs() {return {ids: this.leads.map(l => l.id), sendable: true};}
+  get leadIDs() {return {ids: this.leads.map(l => l.id), sendable: true};} // Array of Lead ids in the _leads array.
   set leadIDs (a) {;}
-  get leadTargets() {return {targets: this.leads.map(l => l.targetName), sendable: true};}
+  get leadTargets() {return {targets: this.leads.map(l => l.targetName), sendable: true};} // Array of Lead targets in the _leads array.
   set leadTargets (a) {;}
   get leadInfo()  {return {on:this.leads[this.leadIndex].on, level:this.leads[this.leadIndex].level, target:this.leads[this.leadIndex].targetName, 
     sendable: true, id: this.leadID, index: this.leadIndex, stepSize: this.leads[this.leadIndex].stepSize * Lead.stepBase,
-    anatomy: this.leads[this.leadIndex].anatomy, strength: this.leads[this.leadIndex].strength};}
+    anatomy: this.leads[this.leadIndex].anatomy, strength: this.leads[this.leadIndex].strength};} // Various pieces of information pertaining to the currently selected Lead object.
   set leadInfo(s) {;}
   
   getDataAsText() {
@@ -318,12 +307,12 @@ class Group {
   }
 }
 
+// Class that represents stimulation settings for a Lead.
 class Lead {
-  // Class that represents stimulation settings for a Lead.
   static _lid = 0; // id counter.
   static get lid()  {return Lead._lid;}
   static set lid(n) {if(typeof n == 'number' && n >= 0 && n < MAX_ID) Lead._lid = n;}
-  static _stepBase = 0.05;
+  static _stepBase = 0.05; // Base amount to increment Lead.
   static get stepBase() {return Lead._stepBase;}
   static set stepBase(n)  {;}
   constructor() {
@@ -334,14 +323,14 @@ class Lead {
     this._lotNumber = "100001"; 
     this._modelNumber = "MN10450";
     this._targetName = ['L Foot', 'R Foot', 'L Leg', 'R Leg','L Arm','R Arm','Back'][randInt(0,6)]; // Body part to be targeted by Lead setting.
-    this.#electrodes = ['+','-','N','N'];
-    this.#impedance = 65534; 
-    this.#location = "''"; 
+    this.#electrodes = ['+','-','N','N']; // [Unused] Electrode settings: + (positive), - (negative), N (neutral). There must be at least one positive and one negative electrode.
+    this.#impedance = 65534;              // [Unused] Active impedence in Ohms. 65534 Ω indicates an open or missing lead.
+    this.#location = "''";                // [Unused] Spinal level where stimulation therapy is delivered by this lead.
     this._stepSize = randInt(1,3); // Affects how much values change by pressing the arrow buttons. Ranges from 1-3 and affects multiple parameters.
-    this.#pulseAmplitude = 0; 
-    this.#maxAmplitude = 6000; 
-    this.#pulseWidth = 300; 
-    this.#pulseFrequency = 20;
+    this.#pulseAmplitude = 0;             // [Unused] Amplitude in μA. Ranges from 0 to 6000μA by default.
+    this.#maxAmplitude = 6000;            // [Unused] 6000μA by default.
+    this.#pulseWidth = 300;               // [Unused] Ranges from 40 - 1000μs.
+    this.#pulseFrequency = 20;            // [Unused] Ranges from 4 – 80 Hz.
     this._anatomy = ['Back', 'Front'][randInt(0,1)]; // Where the stimulus is applied.
     this._strength = ['Burning', 'Soft', 'Normal'][randInt(0,2)]; // Qualitative description of strength.
   }
@@ -361,22 +350,22 @@ class Lead {
   get on() {return this._on;}
   set on(b)  {if(typeof b == 'boolean') this._on = b;}
   get level() {return this._level;} 
-  set level(n) {if(typeof n == 'number' ) {this._level = Number((Math.max(0,Math.min(n,1))).toFixed(2));}} 
+  set level(n) {if(typeof n == 'number' ) {this._level = Number((Math.max(0,Math.min(n,1))).toFixed(5));}} 
   get lotNumber() {return this._lotNumber;} 
   set lotNumber(s) {if(typeof s == 'string' && /^[0-9]*$/.test(s) && s.length < 10)  this._lotNumber = s;}
   get modelNumber() {return this._modelNumber;}
   set modelNumber(s)  {if(typeof s == 'string' && /^[a-zA-Z]*[0-9]*$/.test(s) && s.length < 10)  this._modelNumber = s;}
   get targetName()  {return this._targetName;} 
   set targetName(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length <= 20) this._targetName = s;}
-  #electrodes; // Electreode settings: + (positive), - (negative), N (neutral). There must be at least one positive and one negative electrode.
-  #impedance; // Active impedence in Ohms. 65534 Ω indicates an open or missing lead.
-  #location; // Spinal level where stimulation therapy is delivered by this lead.
+  #electrodes;      
+  #impedance;       
+  #location;        
   get stepSize()  {return this._stepSize;} 
   set stepSize(n)  {if(typeof n == 'number' ) this._stepSize = Math.round(Math.max(1,Math.min(n,3)));}
-  #pulseAmplitude; // Amplitude in μA. Ranges from 0 to 6000μA by default.
-  #maxAmplitude; // 6000μA by default.
-  #pulseWidth; // Ranges from 40 - 1000μs.
-  #pulseFrequency; // Ranges from 4 – 80 Hz.
+  #pulseAmplitude; 
+  #maxAmplitude;    
+  #pulseWidth;      
+  #pulseFrequency;  
   get anatomy() {return this._anatomy;}
   set anatomy(s) {if(typeof s == 'string' && /\w*/.test(s) && s.length < 30) this._anatomy = s;}
   get strength() {return this._strength;} 
@@ -384,7 +373,7 @@ class Lead {
 }
 
 class Person {
-  _title;
+  _title; // Person's title (eg. Dr.).
   _name;
   _id; // Person's id number assigned by institution. 
   _phoneNumber; // A string in the format xxx-xxx-xxxx, with x being a digit. 
@@ -405,7 +394,7 @@ class Person {
   get address() {return this._address;}
   set address(s)  {if(typeof s == 'string' && /^[a-zA-Z0-9 .'-]+$/.test(s) && s.length < 30)  this._address = s;}
   get notes() {return this._notes;}
-  set notes(s)  {if(typeof s == 'string' && s.length < 200)  this._notes = s;}
+  set notes(s)  {if(typeof s == 'string' && s.length < 200)  this._notes = s;} 
 
   getTitle() {return this._title;} 
   setTitle(title) {
@@ -441,20 +430,18 @@ class Person {
 }
 class Doctor extends Person {
   constructor(title = "Dr.", name = "Vojislav", id = "D221250", phoneNumber = "098-765-4321", address = "456 Axium Blvd", notes = "",
-    clinicName = "The Corriveau Hospital", clinicEmail = "info@spinalmodulation.com", clinicHistory = "") {
+    clinicName = "The Corriveau Hospital", clinicEmail = "info@spinalmodulation.com") {
     super(title,name,id,phoneNumber,address,notes);
-    this._clinicName = clinicName; this._clinicEmail = clinicEmail; this.clinicHistory = clinicHistory;
+    this._clinicName = clinicName; this._clinicEmail = clinicEmail; 
   }
   _clinicName;
   _clinicEmail;
-  clinicHistory;
 
   get email() {return this._clinicEmail;}
-  set email(s) {if(typeof s == 'string' && /^[a-zA-Z0-9]+@[a-zA-Z0-9]+.[a-zA-Z0-9]+$/.test(s) && s.length < 30)  this._clinicEmail = s;}
+  set email(s) {if(typeof s == 'string' && /^[a-zA-Z0-9]+@([a-zA-Z0-9]+.)+[a-zA-Z0-9]+$/.test(s) && s.length < 30)  this._clinicEmail = s;}
   get clinicName()  {return this._clinicName;}
   set clinicName(s) {if(typeof s == 'string' && /^[a-zA-Z0-9 .'-]+$/.test(s) && s.length < 30)  this._clinicName = s;}
 
-  performTrial(patient)  {}
   getDataAsText() {
     let s = "\n";
   }

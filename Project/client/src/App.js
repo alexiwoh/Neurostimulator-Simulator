@@ -27,9 +27,6 @@ function App() {
 
   return (
     <>
-      <div className="App">
-        <p>{!data ? "Loading!..." : ""}</p>
-      </div>
       <div>
         <AppComponents />
       </div>  

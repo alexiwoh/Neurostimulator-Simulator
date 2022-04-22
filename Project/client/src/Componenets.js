@@ -1,17 +1,22 @@
+/***                        ***/
+/*** React App Components   ***/
+/***                        ***/
+
 import { useState, createContext, useContext, useEffect } from "react";
 import "./Componenets.css";
 import HumanBody from "./images/HumanBody.png";
 
 const DEBUG = false;
 const border = {border:"3px solid rgba(0, 0, 0, 0.0)"};
-const curPageContext = createContext(); // Context for the 1st column/screen.
-const curPageContext2 = createContext(); // Context for the 2nd column/screen.
+const curPageContext = createContext(); // Context for global states.
 function pagename(s) {return s.toLowerCase().replace(/\s+/g,"").replace("-","");}; // Convert page name for parsing.
 
+// Test page.
 export default function TestPage(params)  {
   return (<></>);
 }
 
+// Test page for manually changing curPage values.
 export function EnterPage() {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
   return (DEBUG) ? (
@@ -26,6 +31,7 @@ export function EnterPage() {
     ) : (<><div style={border}></div></>)
 }
 
+// Test page for manually changing curPage2 values.
 export function EnterPage2() {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
   return (DEBUG) ? (
@@ -40,11 +46,11 @@ export function EnterPage2() {
     ) : (<><div style={border}></div></>)
 }
 
+// Main Component for export.
 export function AppComponents(params) {
-  
-  const [curPage, setCurPage] = useState("home");
-  const [curPage2, setCurPage2] = useState("home");
-  const [refresh, setRefresh] = useState(false);
+  const [curPage, setCurPage] = useState("off"); // Current page for left device (Patient Programmer).
+  const [curPage2, setCurPage2] = useState("off"); // Current page for right device (Clinical Programmer).
+  const [refresh, setRefresh] = useState(false); // Facilitates refreshing of devices upon state change.
   
   return (
     <>
@@ -94,7 +100,7 @@ export function Documentation()  {
       <p>- The Patient Programmer device is on the left and the Clinical Programmer device is on the right.</p>
       <p>- Both devices can be turned on with the "Turn On/Off" button on the home page.</p>
       <p>- A device's battery (top-left) recharges when it is <span class="italics">Off</span> and discharges when it is on.</p>
-      <p>- At any point press the "Exit" button to go to the home page.</p>
+      <p>- At any point press the "Exit" button to go to the home page and "Save Settings" to save entered values.</p>
       <p>- Clicking the "Program Settings" button to go the programmer information page.</p>
       <p class="p1">- In this page you can see device information and change the current date and time for the device.</p>
       <p class="p1">- You can also change which neurostimulator is connected to the device. Possible values are TNS, INS, and unbound.</p>
@@ -111,6 +117,7 @@ export function Documentation()  {
       <p class="p2">- A lead can be selected by clicking one of the four sub tabs.</p>
       <p class="p2">- The "On/Off" button enables/disables the lead.</p>
       <p class="p2">- The "+/-" button increases/decreases the step size of the lead stimulation. This controls the rate of intensity increase on the Patient Programmer.</p>
+      <p class="p2">- When lead settings are saved, the Patient Programmer restarts.</p>
     </div>
   </>)
 }
@@ -169,7 +176,7 @@ export function Page2(params)  {
     : (<><div style={border}></div></>) 
 }
 
-
+// Test page for debugging purposes.
 export function PageA(params)  {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
   const [name, setName] = useState("");
@@ -203,13 +210,22 @@ export function PageA(params)  {
 /*** PATIENT AND CLINICIAN PROGRAMMER COMPONENETS ***/
 /***                                              ***/
 
+/***     
+ * The following functions are repeated in each function component:
+ *                    
+ * handleExit() handles events when the "Exit" button is pressed.
+ * handleSave() or handleSubmit() handles events when the "Save Settings" button is pressed.
+ * match() returns whether the currently selected page matches the necessary value for the Component to render.
+ * 
+ ***/
+
 // Patient Programmer Info and settings page
 export function ProgrammerInfoPage(params)  {
   const {curPage, setCurPage, curPage2, setCurPage2, refresh, setRefresh} = useContext(curPageContext);
-  const [sNo, setSNo] = useState(""); const [vNo, setVNo] = useState("");
-  const [mDate, setMDate] = useState("");
-  const [curDate, setCurDate] = useState(new Date());
-  const [stim, setStim] = useState("");
+  const [sNo, setSNo] = useState(""); const [vNo, setVNo] = useState(""); // States for serial number and version number.
+  const [mDate, setMDate] = useState(""); // Manufacturer date.
+  const [curDate, setCurDate] = useState(new Date()); // Date and time for the device.
+  const [stim, setStim] = useState(""); // Current stiumlator type: TNS, INS, <unbounded>. 
 
   useEffect(()=>{
     if(!matchPage()) return;
@@ -241,6 +257,8 @@ export function ProgrammerInfoPage(params)  {
     .then((data)=>{if(data && data.curValue != undefined) setCurDate(new Date(data.curValue))})
     setCurPage("all"); setCurPage("pinfo");
   }  
+
+  // Handles button to change stimulator type.
   function handleStim() {
     if(stim === "") setStim("TNS");
     else if (stim === "TNS") setStim("INS");
@@ -280,13 +298,14 @@ export function ProgrammerInfoPage(params)  {
       </>)
       : (<><div style={border}></div></>) 
 }
-// Clinician Programmer Info and settings page
+
+// Clinical Programmer Info and settings page
 export function ProgrammerInfoPage_C()  {
   const {curPage, setCurPage, curPage2, setCurPage2, refresh, setRefresh} = useContext(curPageContext);
-  const [sNo, setSNo] = useState(""); const [vNo, setVNo] = useState("");
-  const [mDate, setMDate] = useState("");
-  const [curDate, setCurDate] = useState(new Date());
-  const [stim, setStim] = useState("");
+  const [sNo, setSNo] = useState(""); const [vNo, setVNo] = useState(""); // States for serial number and version number.
+  const [mDate, setMDate] = useState(""); // Manufacturer date.
+  const [curDate, setCurDate] = useState(new Date()); // Date and time for the device.
+  const [stim, setStim] = useState(""); // Current stiumlator type: TNS, INS, <unbounded>. 
 
   useEffect(()=>{
     if(!matchPage()) return;
@@ -318,6 +337,8 @@ export function ProgrammerInfoPage_C()  {
     .then((data)=>{if(data && data.curValue != undefined) setCurDate(new Date(data.curValue))})
     setCurPage2("all"); setCurPage2("pinfo");
   }  
+
+  // Handles button to change stimulator type.
   function handleStim() {
     if(stim === "") setStim("TNS");
     else if (stim === "TNS") setStim("INS");
@@ -360,9 +381,11 @@ export function ProgrammerInfoPage_C()  {
 
 // Patient Programmer's ticking clock component. Also, handles some timed events.
 export function Clock()  {
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(new Date()); // Date and time for the device.
   const [battery, setBattery] = useState(1.0); // Battery level.
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
+
+  // Requests values periodically from the server.
   function fetchValues()  {
     fetch(`/api?classname=pprog&param=date`).then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setDate(new Date(data.curValue))})
@@ -392,7 +415,9 @@ export function Clock()  {
   </div>
   </>)
 }  
-// Clinician programmer clock.
+
+// Clinical programmer clock. 
+// (See comments in the Clock Component above as this Component functions similarily)
 export function Clock_C()  {
   const [date, setDate] = useState(new Date());
   const [battery, setBattery] = useState(1.0); // Battery level.
@@ -429,9 +454,11 @@ export function Clock_C()  {
 
 // Patient programmer footer.
 export function Footer()  {
-  const [id, setID] = useState("");
-  const [SN, setSN] = useState("");
+  const [id, setID] = useState(""); // Patient ID.
+  const [SN, setSN] = useState(""); // Stimulator serial number.
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
+
+  // Fetches values periodically from the server.
   function fetchValues()  {
     fetch(`/api?classname=patient&param=id`).then((res) => {return res.json()})
     .then((data)=>{if(data && data.curValue != undefined) setID(data.curValue)})
@@ -457,7 +484,8 @@ export function Footer()  {
     </div>
     </>)
 }
-// Clinician Programmer footer.
+// Clinical Programmer footer.
+// (See comments in the Footer Component above as this Component functions similarily)
 export function Footer_C()  {
   const [id, setID] = useState("");
   const [SN, setSN] = useState("");
@@ -491,6 +519,8 @@ export function Footer_C()  {
 // Patient Programmer home page component.
 export function HomePage() {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
+
+  // Handles events when On/Off button is pressed.
   function handleOnOff()  {
     let data = (pagename(curPage) === "off") ? true : false;
     fetch(`/api?classname=pprog&param=on`, {
@@ -520,7 +550,9 @@ export function HomePage() {
     </div>
   </>) : (<></>)
 }
-// Clinician Programmer home page component.
+
+// Clinical Programmer home page component.
+// (See comments in the HomePage Component above as this Component functions similarily)
 export function HomePage_C() {
   const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
   function handleOnOff()  {
@@ -553,22 +585,13 @@ export function HomePage_C() {
   </>) : (<></>)
 }
 
-export function Macro() {
-  const {curPage, setCurPage, curPage2, setCurPage2} = useContext(curPageContext);
-  useEffect(()=>{
-    return;
-  }, [curPage])
-  return (<></>)
-}
-
-
 // Patient Programmer: Pages for Group and lead settings and device information.
 export function GroupsPage() {
   const {curPage, setCurPage, curPage2, setCurPage2, refresh, setRefresh} = useContext(curPageContext);
-  const [curSubpage, setCurSubPage] = useState("pain-control");
-  const [curSubpage2, setCurSubPage2] = useState("device");
-  const [curGroupID, setCurGroupID] = useState(0);
-  const [curLeadID, setCurLeadID] = useState(0);
+  const [curSubpage, setCurSubPage] = useState("pain-control"); // Currently selected tab.
+  const [curSubpage2, setCurSubPage2] = useState("device"); // Currently selected sub tab. 
+  const [curGroupID, setCurGroupID] = useState(0); // Array index of currently selected Group.
+  const [curLeadID, setCurLeadID] = useState(0); // Array index of currently selected Lead.
   const [groupData, setGroupData] = useState({
     groupNames : ['0','1','2','3','4','5','6','7'],
     groupIDs: [0,1,2,3,4,5,6,7],
@@ -585,7 +608,7 @@ export function GroupsPage() {
       "index": 0,
       "stepSize": 0.05
     }
-  }); 
+  }); // Data pertaining to currently selected group and lead.
   const [data, setData] = useState({
     stimVersion: "-",
     stimVoltage: "-",
@@ -597,12 +620,12 @@ export function GroupsPage() {
     cName: "-",
     address: "-",
     contact: "-"
-  });
+  }); // Clinical, patient and doctor information to be displayed.
 
   useEffect(()=>{
     if (!matchPage()) return;
-    if (curSubpage === "my-info")  {
-      if(curSubpage2 === "device")  {
+    if (curSubpage === "my-info")  { // Fetches data for My-info page.
+      if(curSubpage2 === "device")  { // Fetches data for Device tab.
         fetch("/api?classname=pstim&param=versionNo").then((res) => {return res.json()})
         .then((data)=>{if(data && data.curValue != undefined) setData(prev => {
           return {...prev, stimVersion: data.curValue}
@@ -615,7 +638,7 @@ export function GroupsPage() {
         .then((data)=>{if(data && data.curValue != undefined) setData(prev => {
           return {...prev, implantDate: new Date(data.curValue)}
         })});
-      } else if (curSubpage2 === "physician") {
+      } else if (curSubpage2 === "physician") { // Fetches data for Physician tab.
         fetch("/api?classname=doctor&param=name").then((res) => {return res.json()})
         .then((data)=>{if(data && data.curValue != undefined) setData(prev => {
           return {...prev, pName: data.curValue}
@@ -632,7 +655,7 @@ export function GroupsPage() {
         .then((data)=>{if(data && data.curValue != undefined) setData(prev => {
           return {...prev, email: data.curValue}
         })});
-      } else if (curSubpage2 === "clinic") {
+      } else if (curSubpage2 === "clinic") { // Fetches data for Clinic tab.
         fetch("/api?classname=doctor&param=clinicName").then((res) => {return res.json()})
         .then((data)=>{if(data && data.curValue != undefined) setData(prev => {
           return {...prev, cName: data.curValue}
@@ -646,7 +669,7 @@ export function GroupsPage() {
           return {...prev, contact: data.curValue}
         })});
       }
-    } else if (curSubpage === "pain-control")  {
+    } else if (curSubpage === "pain-control")  { // Fetches data for Pain Control page.
         fetch("/api?classname=pprog&param=groupData").then((res) => {return res.json()})
         .then((data)=>{if(data && data.curValue != undefined) setGroupData(prev => {
           return {...prev, groupIDs: data.curValue.groupIDs, groupNames: data.curValue.groups, curGroup: data.curValue.currentGroup, leadNames: data.curValue.targets}
@@ -691,6 +714,7 @@ export function GroupsPage() {
     })}); 
   },[curGroupID, curSubpage, curPage, refresh])
 
+  // Handles the On/Off button for the selected lead. 
   function toggleOn() {
     if (!matchPage() || curSubpage !== "pain-control") return;
     fetch(`/api?classname=lead&param=on&id=${groupData.leadInfo.id}`, {
@@ -705,8 +729,8 @@ export function GroupsPage() {
     setRefresh(!refresh);
   }
 
+  // Handles the +/- buttons for the selected lead. 
   function changeLevel(amount)  {
-    
     if (!matchPage() || curSubpage !== "pain-control") return;
     fetch(`/api?classname=lead&param=level&id=${groupData.leadInfo.id}`, {
       method: 'POST',
@@ -721,8 +745,8 @@ export function GroupsPage() {
     setRefresh(!refresh);
   }  
 
+  // Sets a selected button to 'active' wheere it is then highlighted. 
   function setActive(event)  {
-    // Get the buttons.
     let buttons = document.getElementById(event.target.parentElement.id).getElementsByClassName(event.target.className);
     // Loop through buttons and remove 'active' class name.
     for (let i = 0; i < buttons.length; i++) {
@@ -732,6 +756,7 @@ export function GroupsPage() {
     document.getElementById(event.target.id).className +=  " active";
   }
 
+  // Handles the "Turn Off All Simulation" button.
   function turnOffAllSimulation() {
     if (!matchPage() || curSubpage !== "pain-control") return;
     fetch(`/api?classname=pprog&param=turnOffAllStimulation`, {
@@ -749,6 +774,7 @@ export function GroupsPage() {
     setRefresh(!refresh);
   }
 
+  // Returns JSX for "My Info" page and its tabs.
   function getMyInfo()  {
     let innerJSX = (<></>);
     if(curSubpage !== "my-info") return innerJSX; 
@@ -795,6 +821,7 @@ export function GroupsPage() {
     </>) : (<></>)
   } 
 
+  // Returns JSX for "Pain Control" page and its tabs.
   function getPainControl()  {
     return (curSubpage === "pain-control") ? (<>
       <div>
@@ -861,7 +888,8 @@ export function GroupsPage() {
   </>) : (<></>)
 }
 
-// Patient Programmer: Pages for Group, lead, device, and personal inforamtion settings.
+// Clinical Programmer: Pages for Group, lead, device, and personal inforamtion settings.
+// (See comments in the GroupsPage Component above as this Component functions similarily)
 export function Settings_C()  {
   const {curPage, setCurPage, curPage2, setCurPage2, refresh, setRefresh} = useContext(curPageContext);
   const [curSubpage, setCurSubPage] = useState("profile");
@@ -1041,6 +1069,7 @@ export function Settings_C()  {
     setRefresh(!refresh);
   }
 
+  // Handles events when +/- buttons are pressed.
   function changeStepSize(amount)  {
     
     if (!matchPage() || curSubpage !== "pain-control") return;
@@ -1185,7 +1214,6 @@ export function Settings_C()  {
   }
 
   function setActive(event)  {
-    // Get the buttons.
     let buttons = document.getElementById(event.target.parentElement.id).getElementsByClassName(event.target.className);
     // Loop through buttons and remove 'active' class name.
     for (let i = 0; i < buttons.length; i++) {
@@ -1283,7 +1311,7 @@ export function Settings_C()  {
   </>) : (<></>)
 }
 
-
+// Encapsulates "Exit" and "Save Settings" buttons.
 export function BottomButtons(params) {
   return <>
     <div id="bottom-btns">
