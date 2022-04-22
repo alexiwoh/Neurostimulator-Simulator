@@ -25,6 +25,8 @@ Summary
 
   - You can also change which neurostimulator is connected to the device. Possible values are TNS, INS, and unbound.
 
+  - A stimulator must be connected (cannot be "unbound") in order for a lead turned on to have any effect.
+
 - The "Stimulation" button on the Patient Programmer allows you to change stimulation settings and see more specific health-related inforamtion.
 
   - Clicking the "Pain Control" tab allows you to select a stimulation group from the dropdown menu and change settings for the group's leads.

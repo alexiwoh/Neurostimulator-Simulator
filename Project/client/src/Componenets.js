@@ -104,6 +104,7 @@ export function Documentation()  {
       <p>- Clicking the "Program Settings" button to go the programmer information page.</p>
       <p class="p1">- In this page you can see device information and change the current date and time for the device.</p>
       <p class="p1">- You can also change which neurostimulator is connected to the device. Possible values are TNS, INS, and unbound.</p>
+      <p class="p1">- A stimulator must be connected (cannot be "unbound") in order for a lead turned on to have any effect.</p>
       <p>- The "Stimulation" button on the Patient Programmer allows you to change stimulation settings and see more specific health-related inforamtion.</p>
       <p class="p1">- Clicking the "Pain Control" tab allows you to select a stimulation group from the dropdown menu and change settings for the group's leads.</p>
       <p class="p2">- A lead can be selected by clicking one of the four sub tabs.</p>
@@ -225,7 +226,7 @@ export function ProgrammerInfoPage(params)  {
   const [sNo, setSNo] = useState(""); const [vNo, setVNo] = useState(""); // States for serial number and version number.
   const [mDate, setMDate] = useState(""); // Manufacturer date.
   const [curDate, setCurDate] = useState(new Date()); // Date and time for the device.
-  const [stim, setStim] = useState(""); // Current stiumlator type: TNS, INS, <unbounded>. 
+  const [stim, setStim] = useState("TNS"); // Current stiumlator type: TNS, INS, <unbounded>. 
 
   useEffect(()=>{
     if(!matchPage()) return;
