@@ -1,3 +1,5 @@
+/* eslint-disable */ 
+
 /***                        ***/
 /*** CLASSES FOR SIMULATION ***/
 /***                        ***/

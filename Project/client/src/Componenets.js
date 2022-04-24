@@ -1,10 +1,12 @@
+/* eslint-disable */ 
+
 /***                        ***/
 /*** React App Components   ***/
 /***                        ***/
 
 import { useState, createContext, useContext, useEffect } from "react";
 import "./Componenets.css";
-import HumanBody from "./images/HumanBody.png";
+//import HumanBody from "./images/HumanBody.png";
 
 const DEBUG = false;
 const border = {border:"3px solid rgba(0, 0, 0, 0.0)"};
@@ -306,7 +308,7 @@ export function ProgrammerInfoPage_C()  {
   const [sNo, setSNo] = useState(""); const [vNo, setVNo] = useState(""); // States for serial number and version number.
   const [mDate, setMDate] = useState(""); // Manufacturer date.
   const [curDate, setCurDate] = useState(new Date()); // Date and time for the device.
-  const [stim, setStim] = useState(""); // Current stiumlator type: TNS, INS, <unbounded>. 
+  const [stim, setStim] = useState("TNS"); // Current stiumlator type: TNS, INS, <unbounded>. 
 
   useEffect(()=>{
     if(!matchPage()) return;
