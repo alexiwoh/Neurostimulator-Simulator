@@ -9,6 +9,7 @@ You may have to type "npm install" to install dependencies in either folder.
 ----------------------------------------------------------------------------------------------------
 
 ************ My Files ************
+
 React and Express was used to create many of the files that allows the project to run. 
 The files containing my code are:
 
