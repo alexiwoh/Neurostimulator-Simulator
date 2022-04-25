@@ -15,13 +15,13 @@ The files containing my code are:
 
 In /Project/client/src:
 - Components.js:      contains all function components for React to use upon rendering.
-- Components.css      contains styling information for the GUI.
-- App.js              driver code.
+- Components.css:      contains styling information for the GUI.
+- App.js:              driver code.
 
 In /Project/server:
-- index.js            Relays incoming HTTP requests to Logic.js.
-- Logic.js            Parses HTTP requests and returns appropriate data.
-- Classes.js          Contains classes used to organize the project data.
+- index.js:            Relays incoming HTTP requests to Logic.js.
+- Logic.js:            Parses HTTP requests and returns appropriate data.
+- Classes.js:          Contains classes used to organize the project data.
 
 ----------------------------------------------------------------------------------------------------
 
