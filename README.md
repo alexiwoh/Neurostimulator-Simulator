@@ -5,5 +5,3 @@ Medical device simulations are a useful program that allows healthcare patients,
 To run, open the server folder in a terminal and type "npm install" to install dependencies then "npm start" to run the server.
 Then open the client folder in a separate terminal and type "npm install" then "npm start".
 The app should open up in a browser automatically. 
-
-You may have to type "npm install" to install dependencies. 
