@@ -5,3 +5,5 @@ Medical device simulations are a useful program that allows healthcare patients,
 To run, open the server folder in a terminal and type "npm install" to install dependencies then "npm start" to run the server.
 Then open the client folder in a separate terminal and type "npm install" then "npm start".
 The app should open up in a browser automatically. 
+
+![image](https://github.com/alexiwoh/Neurostimulator-Simulator/assets/71348624/971a5fd4-2414-4bb0-b98f-0a43f1701da2)
