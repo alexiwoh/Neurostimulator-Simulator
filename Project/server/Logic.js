@@ -1,52 +1,69 @@
-let session = require('express-session');
+/* eslint-disable */ 
 
+/***                        ***/
+/*** HTTP REQUEST HANDLING  ***/
+/***                        ***/
+
+let session = require('express-session');
 let classes = require('./Classes');
-let sessionData = {};
+let sessionData = {}; // Stores a map of all models to thier user sessions.
 var id = 1;
 
 const DEBUG = false;
 
+// Creates a new session to Model mapping.
 function createSessionData(req)  {
   req.session.sid = id;
   sessionData[id] = new classes.Model(id); 
-  //console.log(Object.prototype.toString.call(new classes.Stimulator())); 
-  //sessionData[id].pProg.groups[0] = new classes.Lead();
-  //console.log((new classes.Stimulator) instanceof classes.Stimulator); 
-  id++;
-  
+  id++; 
 }
+
+// Returns the Model mapped to this session, or creates a new model if this is a new session.
 function getSessionModel(req)  {
   if(!req.session.sid)  
     createSessionData(req);
   return sessionData[req.session.sid];
 };
+
+// Returns dataAsText for the session Model. This is for debugging purposes.
 function getSessionData(req)  {
+  if(!DEBUG)  return "";
   return getSessionModel(req).getDataAsText();
 };
 
+/* 
+  Processes given HTTP request and outputs response as a "data" object. 
 
+  data.curValue and data.oldValue are the current and old values of the parameter respectively.
+  data.setValue is the value the request attempted to change the parameter to (not returned for GET requests).
+  data.success is whether the value was successfuly changed (not returned for GET requests).
+*/
 function parseRequest(req, res, data)  {
-  if(DEBUG || req.method.toLowerCase() === "post") {
-  req.query.classname = req.query.classname || req.body.classname;
-  req.query.id = req.query.id || req.body.id;
-  req.query.param = req.query.param || req.body.param;
-  console.log("\n---------------------------------REQUEST DATA----------------\n")
-  console.log(req.method)
-  console.log(`class: ${req.query.classname}, param: ${req.query.param}`)
-  console.log(`setType: ${req.body.setType}, setValue: ${req.body.setValue}`)
+  if(req.method.toLowerCase() === "post") {
+    // Prepares request parameters for processing.
+    req.query.classname = req.query.classname || req.body.classname;
+    req.query.id = req.query.id || req.body.id;
+    req.query.param = req.query.param || req.body.param;
+    if(DEBUG) {
+      console.log("\n---------------------------------REQUEST DATA----------------\n")
+      console.log(req.method)
+      console.log(`class: ${req.query.classname}, param: ${req.query.param}`)
+      console.log(`setType: ${req.body.setType}, setValue: ${req.body.setValue}`)
+    }
   }
-  
-
   if(!req.query || !req.query.classname || !req.query.param)  return;
   if(req.body.setType === null || req.body.setValue === null) return;
-  let obj = getObject(req);
+
+  // Gets apporpriate object to be used based on the request parameters.
+  let obj = getObject(req); 
+  if(obj[req.query.param] == undefined || (typeof obj[req.query.param] == "object" && !obj[req.query.param].sendable)) return; // Only return whole objects in certain cases.
   
-  //console.log(obj[req.query.param]);
-  if(obj[req.query.param] == undefined || (typeof obj[req.query.param] == "object" && !obj[req.query.param].sendable)) return;
-  data.curValue = obj[req.query.param];
+  data.curValue = obj[req.query.param]; // Fetch and store requested parameter value in "data" object.
+
+  // Handle POST/PUT requests.
   if(req.method.toLowerCase() === "post" || req.method.toLowerCase() === "put") {
     data.oldValue = obj[req.query.param];
-    if((typeof req.body.setValue != 'number' && typeof req.body.setValue != 'boolean')  && !req.body.setValue.match(/^[0-9a-zA-Z -@.]+$/))  {data.success = false;} // Prevents HTML code injection.
+    if((typeof req.body.setValue != 'number' && typeof req.body.setValue != 'boolean')  && !req.body.setValue.match(/^[0-9a-zA-Z !'@.\-]+$/))  {data.success = false;} // Prevents HTML code injection.
     if(typeof req.body.setType === "string" && data.success === undefined) {
       if(req.body.setType.toLowerCase().startsWith("abs"))  { 
         obj[req.query.param] = req.body.setValue;
@@ -61,12 +78,13 @@ function parseRequest(req, res, data)  {
       data.success = (data.oldValue != undefined && data.oldValue != data.curValue) || (req.body.setValue === data.curValue);
     
   }
-  if(DEBUG || req.method.toLowerCase() === "post") {
+  if(DEBUG && req.method.toLowerCase() === "post") {
     console.log("\n-------------------------------RESPONSE DATA-----------------\n");
     console.log(`curValue: ${data.curValue}, oldValue: ${data.oldValue}, setValue: ${data.setValue}, success: ${data.success}`);
   }
 }
-
+ 
+// Returns the appropriate Class object depending on the requested url classname paramater.
 function getObject(req) {
   let className = req.query.classname;
   if(!className)  return {};

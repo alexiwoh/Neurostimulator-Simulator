@@ -1,5 +1,10 @@
+/* eslint-disable */ 
+
 // Alexander Iwoh
 // /server/index.js 
+/***                        ***/
+/*** HTTP REQUEST HANDLING  ***/
+/***                        ***/
 
 var logic = require('./Logic');
 var express = require('express');
@@ -20,10 +25,13 @@ app.get(['/api','/info'], function(req,res) {
   logic.parseRequest(req, res, data);
   data.message = logic.getSessionData(req)
   res.json(data);
-  //res.json({ message: "Hi from server!!!" });
-  //res.setHeader('Content-Type','application/json');
-  //res.status(200).send({dataType: "",data: "api", message: "Hello"});
 });
+
+/*
+For POST/PUT requests the body has the format {setType: "absolute" or "relative", setValue: <SomeValue>}
+"absolute" denotes the setValue overwrites the target parameter's value.
+"relative" denotes the setValue is added to the target parameter's value.
+*/ 
 app.post(['/api','/info'], function(req,res) {
   let data = {}
   logic.parseRequest(req, res, data);
@@ -39,8 +47,6 @@ app.use('/', function(req, res) {
   logic.parseRequest(req, res, data);
   data.message = logic.getSessionData(req);
   res.json(data);
-  //res.status(200).send("Simulation started!");
-  //return next();
 });
 app.listen(port, () => {console.log(`Server listening at http://localhost:${port}`)});
 

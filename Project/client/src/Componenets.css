@@ -1,25 +1,61 @@
 :root {
   --button-color: rgb(255, 184, 97);
-  --hover-color: rgb(255, 255, 255);
+  --hover-color: rgba(255, 255, 255, 1.0);
   --header-color: rgb(180, 180, 180);
   --red-color: rgb(255, 88, 88);
   --bar-color: rgb(163, 218, 81);
   --button-color-2: rgb(175, 175, 254);
+  --background-color-2: rgb(220, 220, 255);
 }
 
+.italics {
+  font-style: italic;
+}
+
+.whitespace {
+  color: white;
+  opacity: 0;
+}
+.p1 {
+  margin-left: 20px;
+}
+
+.p2 {
+  margin-left: 40px;
+}
+
+#deviceName1 {
+  margin-left: 15%; 
+}
+
+#deviceName2 {
+  margin-left: 25%;
+}
+
+.deviceName {
+  margin-top: 50px;
+}
+
+.outerDeviceBox {
+  width: 40%;
+  height: 650px;
+  float: left;
+  margin-left: 5%;
+  margin-bottom: 50px;
+}
 
 .deviceBox {
   float: left;
   opacity: 1.0;
-  width: 35%;
-  height: 500px;
+  width: 100%;
+  height: 575px;
   overflow-wrap: break-word;
   display: block;
   overflow: hidden;
   align-items: center;
   align-content: center;
-  margin-left: 10%;
-  margin-top: 5%;
+  margin-left: 0%;
+  margin-top: 1%;
   position: relative;
   border: 3px solid rgba(0, 0, 0, 0.75);
   overflow-y: auto;
@@ -37,20 +73,18 @@
 
 .header, .footer {
   background-color: var(--header-color);
-  height: 10%;
+  height: 9%;
 }
 
 #deviceBox1 {
   float: left;
   background-color:rgb(253, 211, 160);
-  
-
 }
 
 #deviceBox2 {
   float: left;
   margin-left: 10%;
-  background-color:rgb(220, 220, 255);
+  background-color:var(--background-color-2);
 
 }
 .testDeviceBox {
@@ -58,9 +92,8 @@
   align-items: center;
   align-content: center;
   margin-left: 10%;
-  background-color:lightpink;
   float: left;
-  border: 3px solid rgba(0, 0, 0, 0.75);
+  border: 3px solid rgba(0, 0, 0, 0.0);
 }
 
 .insideDiv {
@@ -86,8 +119,7 @@
   background-color: var(--button-color);
   color: black;
   padding: 22px 16px;
-  width: auto;
-  height: auto;
+
   float: left;
   border: 1px solid rgba(0, 0, 0, 0.5);
   border-radius: 10px;
@@ -97,11 +129,37 @@
   cursor: pointer;
 }
 
-.groups-tab button:hover, .groups-tab button.active, .home-pane-btn:hover, .full-btn:hover, .half-btn:hover {
-  background-color: var(--hover-color);
+.groups-tab-cprog button {
+  display: block;
+  background-color: var(--button-color-2);
+  color: black;
+  padding: 22px 16px;
+
+  float: left;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  outline: none;
+  text-align: left;
+  margin-top: 5px;
+  cursor: pointer;
 }
 
-.home-pane-btn, .full-btn, .half-btn {
+.group-pane-button {
+  height: 50px;
+}
+
+.info-pane-button {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  width: 85px;
+  height: 50px;
+}
+
+#myinfo-pane button {
+  width: auto;
+}
+
+.home-pane-btn, .full-btn, .half-btn, .full-btn-c {
   display: block;
   color: black;
   padding: 22px 16px;
@@ -120,7 +178,11 @@
   background-color: var(--button-color);
 }
 
-.full-btn, .full-btn-special {
+.full-btn-c {
+  background-color: var(--button-color-2);
+}
+
+.full-btn, .full-btn-special, .full-btn-c {
   margin-left: 5%;
   width: 90%;
 }
@@ -133,7 +195,9 @@
   margin-left: 5%;
   width: 42.5%;
   background-color: var(--header-color);
+  overflow-x: hidden;
 }
+
 
 .on-btn {
   width: 25%;
@@ -145,6 +209,12 @@
   0% {background-color: var(--button-color);}
   50% {background-color: var(--bar-color);}
   100% {background-color: var(--button-color);}
+}
+
+@keyframes on-blink-C {
+  0% {background-color: var(--button-color-2);}
+  50% {background-color: var(--bar-color);}
+  100% {background-color: var(--button-color-2);}
 }
 
 .up-dn-btn, .on-btn {
@@ -167,9 +237,19 @@
   width: 30px;
 }
 
-.up-dn-btn:hover, .on-btn:hover, .all-off-btn:hover {
+.up-dn-btn:hover, .on-btn:hover, .all-off-btn:hover, #current-time-select:hover, #current-time-select-cprog:hover, #current-time-select:focus, #current-time-select-cprog:focus {
   background-color: var(--hover-color);
 }
+
+.groups-tab button:hover, .groups-tab button.active, .groups-tab-cprog button:hover, .groups-tab-cprog button.active, .home-pane-btn:hover, .full-btn:hover, .half-btn:hover, .full-btn-c:hover {
+  background-color: var(--hover-color);
+}
+
+.up-dn-pane-cprog button  {
+  background-color: var(--button-color-2);
+}
+
+
 
 #group-selector {
   float: left;
@@ -184,7 +264,20 @@
   background-color: var(--button-color);
 }
 
-#group-selector:hover {
+#group-selector-C {
+  float: left;
+  width: 100%;
+  height: 50px;
+  margin-bottom: 10px;
+  margin-top: 5px;
+  border-radius: 10px;
+  text-align-last: right;
+  padding-right: 50%;
+  direction: rtl;
+  background-color: var(--button-color-2);
+}
+
+#group-selector:hover, #group-selector-C:hover {
   background-color: var(--hover-color);
 }
 
@@ -216,4 +309,38 @@ progress[value]::-webkit-progress-value {
   0% {background-color: var(--bar-color);}
   50% {background-color: var(--red-color);}
   100% {background-color: var(--bar-color);}
+}
+
+#current-time-select {
+  background-color: var(--button-color);
+  border-radius: 10px;
+}
+
+#current-time-select-cprog {
+  background-color: var(--button-color-2);
+}
+
+#current-time-select, #current-time-select-cprog {
+  border-radius: 10px;
+}
+
+.data-cprog input, #notesBox{
+  background-color: var(--background-color-2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  
+  text-align: center;
+  direction: ltr;
+}
+.data-cprog input:hover, .data-cprog input:focus, #notesBox:focus, #notesBox:hover {
+  background-color: var(--hover-color);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+#notesBox {
+  width: 100%;
+  overflow-wrap: break-word;
+  resize: none;
+}
+.smallBox {
+  width: 10%;
 }
